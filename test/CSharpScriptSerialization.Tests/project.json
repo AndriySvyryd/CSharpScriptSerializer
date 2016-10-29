@@ -1,0 +1,39 @@
+﻿{
+  "version": "0.1.0-*",
+
+  "buildOptions": {
+    "warningsAsErrors": true
+  },
+
+  "testRunner": "xunit",
+
+  "dependencies": {
+    "CSharpScriptSerialization": "0.1.0-*",
+    "dotnet-test-xunit": "2.2.0-preview2-build1029",
+    "xunit": "2.2.0-beta3-build3402"
+  },
+
+  "frameworks": {
+    "netcoreapp1.0": {
+      "dependencies": {
+        "Microsoft.NETCore.App": {
+          "type": "platform",
+          "version": "1.0.1"
+        },
+        "Microsoft.CSharp": "4.0.1"
+      },
+      "imports": [
+        "dotnet5.6",
+        "portable-net45+win8"
+      ]
+    },
+    "net46": {
+      "frameworkAssemblies": {
+        "Microsoft.CSharp": "",
+        "System.Runtime": {
+          "type": "build"
+        }
+      }
+    }
+  }
+}
