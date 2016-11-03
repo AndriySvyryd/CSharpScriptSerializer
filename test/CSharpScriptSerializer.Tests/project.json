@@ -1,5 +1,5 @@
 ﻿{
-  "version": "0.1.0-*",
+  "version": "1.0.0-*",
 
   "buildOptions": {
     "warningsAsErrors": true
@@ -8,7 +8,7 @@
   "testRunner": "xunit",
 
   "dependencies": {
-    "CSharpScriptSerialization": "0.1.0-*",
+    "CSharpScriptSerializer": "1.0.0-*",
     "dotnet-test-xunit": "2.2.0-preview2-build1029",
     "xunit": "2.2.0-beta3-build3402"
   },

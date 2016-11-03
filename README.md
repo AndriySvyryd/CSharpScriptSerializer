@@ -9,4 +9,6 @@ A library that generates C# scripts that can be used to construct the given obje
 
 Here `script` is equal to `"new Point {X = 1, Y = 1}"`
 
-See [RoundTrippingTest.cs](https://github.com/AndriySvyryd/CSharpScriptSerializer/blob/dev/test/CSharpScriptSerialization.Tests/RoundTrippingTest.cs) for more examples.
+See [RoundTrippingTest.cs](https://github.com/AndriySvyryd/CSharpScriptSerializer/blob/dev/test/CSharpScriptSerializer.Tests/RoundTrippingTest.cs) for more examples.
+
+Get it from [NuGet](https://www.nuget.org/packages/CSharpScriptSerializer/).

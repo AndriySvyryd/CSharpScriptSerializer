@@ -5,10 +5,7 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 
-[assembly: AssemblyConfiguration(configuration: "")]
-[assembly: AssemblyCompany(company: "")]
-[assembly: AssemblyProduct(product: "CSharpScriptSerialization")]
-[assembly: AssemblyTrademark(trademark: "")]
+[assembly: AssemblyProduct(product: "CSharpScriptSerializer")]
 
 // Setting ComVisible to false makes the types in this assembly not visible
 // to COM components.  If you need to access a type in this assembly from

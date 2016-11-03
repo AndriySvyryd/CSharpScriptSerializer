@@ -1,0 +1,47 @@
+﻿{
+  "version": "1.0.0-*",
+  "name": "CSharpScriptSerializer",
+  "title": "CSharpScriptSerializer",
+  "description": "Serialize to C# scripts",
+  "homepage": "https://github.com/AndriySvyryd/CSharpScriptSerializer",
+  "authors": [ "Andriy Svyryd" ],
+
+  "packOptions": {
+    "tags": [ "Roslyn", "CSharp", "C#", "CSX", "Script", "Serialization" ],
+    "owners": [ "Andriy.Svyryd" ],
+    "releaseNotes": "Version 1.0.0-alpha1\r\n* Initial release",
+    "projectUrl": "https://github.com/AndriySvyryd/CSharpScriptSerializer",
+    "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
+    "requireLicenseAcceptance": false,
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/AndriySvyryd/CSharpScriptSerializer.git"
+    }
+  },
+
+  "dependencies": {
+    "Microsoft.CodeAnalysis.CSharp.Scripting": "1.3.2",
+    "Microsoft.CodeAnalysis.CSharp.Workspaces": "1.3.2"
+  },
+
+  "frameworks": {
+    "netstandard1.5": {
+      "dependencies": {
+        "NETStandard.Library": "1.6.1-*",
+        "Microsoft.CSharp": "4.0.1"
+      },
+      "imports": [
+        "dotnet5.6",
+        "portable-net45+win8"
+      ]
+    },
+    "net46": {
+      "frameworkAssemblies": {
+        "Microsoft.CSharp": "",
+        "System.Runtime": {
+          "type": "build"
+        }
+      }
+    }
+  }
+}
