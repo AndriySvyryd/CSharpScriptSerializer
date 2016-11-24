@@ -41,7 +41,8 @@ namespace CSharpScriptSerialization
         public static T Deserialize<T>(string script, IEnumerable<Assembly> referencedAssemblies, IEnumerable<string> imports)
             => DeserializeAsync<T>(script, referencedAssemblies, imports).GetAwaiter().GetResult();
 
-        public static Task<T> DeserializeAsync<T>(string script, IEnumerable<Assembly> referencedAssemblies, IEnumerable<string> imports)
+        public static Task<T> DeserializeAsync<T>(
+            string script, IEnumerable<Assembly> referencedAssemblies, IEnumerable<string> imports)
             => CSharpScript.EvaluateAsync<T>(script,
                 ScriptOptions.Default.WithReferences(
                     typeof(T).GetTypeInfo().Assembly,
@@ -53,10 +54,12 @@ namespace CSharpScriptSerialization
                     .AddReferences(typeof(CSScriptSerializer).GetTypeInfo()
                         .Assembly.GetReferencedAssemblies()
                         .Select(Assembly.Load))
+                    .AddReferences(referencedAssemblies)
                     .AddImports(
                         typeof(T).GetTypeInfo().Namespace,
                         typeof(DateTime).GetTypeInfo().Namespace,
-                        typeof(List<>).GetTypeInfo().Namespace));
+                        typeof(List<>).GetTypeInfo().Namespace)
+                    .AddImports(imports));
 
         public static string Serialize(object obj)
         {
@@ -80,10 +83,7 @@ namespace CSharpScriptSerialization
 
         public static ExpressionSyntax GetCreationExpression(object obj)
         {
-            var serializable = obj as ICSScriptSerializable;
-            return serializable != null
-                ? serializable.GetCreation()
-                : GetSerializer(obj).GetCreation(obj);
+            return GetSerializer(obj).GetCreation(obj);
         }
 
         private static ICSScriptSerializer GetSerializer(object obj)
@@ -91,6 +91,12 @@ namespace CSharpScriptSerialization
             if (obj == null)
             {
                 return NullCSScriptSerializer.Instance;
+            }
+
+            var serializable = obj as ICSScriptSerializable;
+            if (serializable != null)
+            {
+                return serializable.GetSerializer();
             }
 
             var type = UnwrapNullableType(obj.GetType());
@@ -238,7 +244,6 @@ namespace CSharpScriptSerialization
                 throw new InvalidOperationException($"The type {type} does not have public writable properties");
             }
 
-            // TODO: record types being constructed to avoid recursion
             return (CSScriptSerializer)GetDeclaredConstructor(
                 typeof(PropertyCSScriptSerializer<>).MakeGenericType(type), types: null)
                 .Invoke(parameters: null);

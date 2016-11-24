@@ -23,36 +23,64 @@ namespace CSharpScriptSerialization
         }
 
         public PropertyCSScriptSerializer(IEnumerable<PropertyInfo> properties)
-            : this(properties, parameterGetters: null)
+            : this(properties, constructorParameterGetters: null)
         {
         }
 
         public PropertyCSScriptSerializer(IReadOnlyDictionary<string, Func<T, object>> propertyValueGetters)
-            : this(propertyValueGetters, parameterGetters: null)
+            : this(propertyValueGetters, constructorParameterGetters: null)
         {
         }
 
         public PropertyCSScriptSerializer(IEnumerable<PropertyInfo> properties,
-            IReadOnlyCollection<Func<T, object>> parameterGetters)
-            : this(
-                properties.Select(p => new PropertyData(p.Name, p.PropertyType, CreatePropertyInitializer(p))).ToArray(),
-                parameterGetters)
+            IReadOnlyCollection<Func<T, object>> constructorParameterGetters)
+            : this(properties.Select(p => new PropertyData(
+                p.Name,
+                p.PropertyType,
+                CreatePropertyInitializer(p),
+                o => GetDefault(p.PropertyType))).ToArray(),
+                constructorParameterGetters)
         {
         }
 
         public PropertyCSScriptSerializer(IReadOnlyDictionary<string, Func<T, object>> propertyValueGetters,
-            IReadOnlyCollection<Func<T, object>> parameterGetters)
-            : base(parameterGetters)
+            IReadOnlyCollection<Func<T, object>> constructorParameterGetters)
+            : this(propertyValueGetters, constructorParameterGetters, new Dictionary<string, object>())
+        {
+        }
+
+        public PropertyCSScriptSerializer(IReadOnlyDictionary<string, Func<T, object>> propertyValueGetters,
+            IReadOnlyCollection<Func<T, object>> constructorParameterGetters,
+            IReadOnlyDictionary<string, object> propertyDefaults)
+            : this(
+                propertyValueGetters,
+                constructorParameterGetters,
+                propertyDefaults.ToDictionary<KeyValuePair<string, object>, string, Func<T, object>>(
+                    p => p.Key,
+                    p => o => p.Value))
+        {
+        }
+
+        public PropertyCSScriptSerializer(IReadOnlyDictionary<string, Func<T, object>> propertyValueGetters,
+            IReadOnlyCollection<Func<T, object>> constructorParameterGetters,
+            IReadOnlyDictionary<string, Func<T, object>> propertyDefaultGetters)
+            : this(constructorParameterGetters)
         {
             var properties = typeof(T).GetTypeInfo()
-                    .GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-                    .ToDictionary(p => p.Name);
-            _propertyData = propertyValueGetters.Select(p => new PropertyData(p.Key, properties[p.Key].PropertyType, p.Value)).ToArray();
+                .GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                .ToDictionary(p => p.Name);
+            _propertyData = propertyValueGetters.Select(
+                p => new PropertyData(
+                    p.Key,
+                    properties[p.Key].PropertyType,
+                    p.Value,
+                    propertyDefaultGetters.GetValueOrDefault(p.Key, o => GetDefault(properties[p.Key].PropertyType))))
+                .ToArray();
         }
 
         protected PropertyCSScriptSerializer(IReadOnlyCollection<PropertyData> propertyData,
-            IReadOnlyCollection<Func<T, object>> parameterGetters)
-            : base(parameterGetters)
+            IReadOnlyCollection<Func<T, object>> constructorParameterGetters)
+            : base(constructorParameterGetters)
         {
             _propertyData = propertyData;
         }
@@ -62,7 +90,6 @@ namespace CSharpScriptSerialization
         public override ExpressionSyntax GetCreation(object obj)
             => GetObjectCreationExpression((T)obj);
 
-        // TODO: custom defaults
         protected override ObjectCreationExpressionSyntax GetObjectCreationExpression(T obj)
             => base.GetObjectCreationExpression(obj)
                 .WithInitializer(AddNewLine(
@@ -70,13 +97,18 @@ namespace CSharpScriptSerialization
                         SyntaxKind.ObjectInitializerExpression,
                         SyntaxFactory.SeparatedList<ExpressionSyntax>(
                             ToCommaSeparatedList(_propertyData
-                                .Select(p => new {p.PropertyName, p.PropertyType, PropertyValue = p.PropertyInitializer(obj)})
-                                .Where(p => !IsDefault(p.PropertyValue, p.PropertyType))
-                                .Select(p =>
-                                    SyntaxFactory.AssignmentExpression(
-                                        SyntaxKind.SimpleAssignmentExpression,
-                                        SyntaxFactory.IdentifierName(p.PropertyName),
-                                        GetCreationExpression(p.PropertyValue))))))));
+                                .Select(p => new
+                                {
+                                    p.PropertyName,
+                                    p.PropertyType,
+                                    PropertyValue = p.PropertyValueGetter(obj),
+                                    PropertyDefault = p.PropertyDefaultGetter(obj)
+                                })
+                                .Where(p => !Equals(p.PropertyValue, p.PropertyDefault))
+                                .Select(p => SyntaxFactory.AssignmentExpression(
+                                    SyntaxKind.SimpleAssignmentExpression,
+                                    SyntaxFactory.IdentifierName(p.PropertyName),
+                                    GetCreationExpression(p.PropertyValue))))))));
 
         protected static Func<T, object> CreatePropertyInitializer(PropertyInfo property)
         {
@@ -91,16 +123,22 @@ namespace CSharpScriptSerialization
 
         protected class PropertyData
         {
-            public PropertyData(string propertyName, Type propertyType, Func<T, object> propertyInitializer)
+            public PropertyData(
+                string propertyName,
+                Type propertyType,
+                Func<T, object> propertyValueGetter,
+                Func<T, object> propertyDefaultGetter)
             {
                 PropertyName = propertyName;
                 PropertyType = propertyType;
-                PropertyInitializer = propertyInitializer;
+                PropertyValueGetter = propertyValueGetter;
+                PropertyDefaultGetter = propertyDefaultGetter;
             }
 
             public string PropertyName { get; }
             public Type PropertyType { get; }
-            public Func<T, object> PropertyInitializer { get; }
+            public Func<T, object> PropertyValueGetter { get; }
+            public Func<T, object> PropertyDefaultGetter { get; }
         }
     }
 }

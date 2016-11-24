@@ -24,5 +24,20 @@ namespace CSharpScriptSerialization
 
             return values;
         }
+
+        internal static TValue GetValueOrDefault<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> dictionary, TKey key)
+            => dictionary.GetValueOrDefault(key, default(TValue));
+
+        internal static TValue GetValueOrDefault<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue> dictionary,
+            TKey key, TValue fallBack)
+        {
+            TValue value;
+            if (dictionary.TryGetValue(key, out value))
+            {
+                return value;
+            }
+
+            return fallBack;
+        }
     }
 }

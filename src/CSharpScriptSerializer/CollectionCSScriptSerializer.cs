@@ -13,19 +13,19 @@ namespace CSharpScriptSerialization
         private readonly Func<T, IEnumerable<object>> _getEnumerable;
 
         public CollectionCSScriptSerializer()
-            : this(elementDecomposers: null, parameterGetters: null)
+            : this(elementDecomposers: null, constructorParameterGetters: null)
         {
         }
 
         public CollectionCSScriptSerializer(
             IReadOnlyCollection<Func<object, object>> elementDecomposers)
-            : this(elementDecomposers, parameterGetters: null)
+            : this(elementDecomposers, constructorParameterGetters: null)
         {
         }
 
         public CollectionCSScriptSerializer(
-            IReadOnlyCollection<Func<T, object>> parameterGetters)
-            : this(elementDecomposers: null, parameterGetters: parameterGetters)
+            IReadOnlyCollection<Func<T, object>> constructorParameterGetters)
+            : this(elementDecomposers: null, constructorParameterGetters: constructorParameterGetters)
         {
         }
 
@@ -37,9 +37,9 @@ namespace CSharpScriptSerialization
         }
 
         public CollectionCSScriptSerializer(
-            IReadOnlyCollection<Func<T, object>> parameterGetters,
+            IReadOnlyCollection<Func<T, object>> constructorParameterGetters,
             Func<T, IEnumerable<object>> getEnumerable)
-            : this(elementDecomposers: null, parameterGetters: parameterGetters, getEnumerable: getEnumerable)
+            : this(elementDecomposers: null, constructorParameterGetters: constructorParameterGetters, getEnumerable: getEnumerable)
         {
         }
 
@@ -52,8 +52,8 @@ namespace CSharpScriptSerialization
 
         public CollectionCSScriptSerializer(
             IReadOnlyCollection<Func<object, object>> elementDecomposers,
-            IReadOnlyCollection<Func<T, object>> parameterGetters)
-            : this(elementDecomposers, parameterGetters, getEnumerable: null)
+            IReadOnlyCollection<Func<T, object>> constructorParameterGetters)
+            : this(elementDecomposers, constructorParameterGetters, getEnumerable: null)
         {
         }
 
@@ -71,9 +71,9 @@ namespace CSharpScriptSerialization
 
         public CollectionCSScriptSerializer(
             IReadOnlyCollection<Func<object, object>> elementDecomposers,
-            IReadOnlyCollection<Func<T, object>> parameterGetters,
+            IReadOnlyCollection<Func<T, object>> constructorParameterGetters,
             Func<T, IEnumerable<object>> getEnumerable)
-            : base(parameterGetters)
+            : base(constructorParameterGetters)
         {
             _elementDecomposers = elementDecomposers;
             _getEnumerable = getEnumerable ?? (o => ((IEnumerable)o).Cast<object>());

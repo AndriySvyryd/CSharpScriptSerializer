@@ -152,6 +152,21 @@ namespace CSharpScriptSerialization.Tests
         }
 
         [Fact]
+        public void Self_referencing_type()
+        {
+            var input = new Recursive();
+            var script = CSScriptSerializer.Serialize(input);
+            var output = CSScriptSerializer.Deserialize<Recursive>(script);
+
+            Assert.Equal(input.Self, output.Self);
+        }
+
+        public class Recursive
+        {
+            public Recursive Self { get; set; }
+        }
+
+        [Fact]
         public void NestedGenerics()
         {
             var input = new Nested1<string>.Nested2<int, bool> {Prop = Tuple.Create("1", 1, false)};
@@ -212,14 +227,13 @@ namespace CSharpScriptSerialization.Tests
 
             public int? OptionalInt { get; set; }
 
-            public ExpressionSyntax GetCreation()
+            public ICSScriptSerializer GetSerializer()
                 => new PropertyCSScriptSerializer<SerializableConstructor>(
                     new Dictionary<string, Func<SerializableConstructor, object>>
                     {
                         {nameof(OptionalInt), o => o.OptionalInt}
                     },
-                    new List<Func<SerializableConstructor, object>> {o => o.RequiredString})
-                    .GetCreation(this);
+                    new List<Func<SerializableConstructor, object>> {o => o.RequiredString});
         }
 
         [Fact]
@@ -283,6 +297,33 @@ namespace CSharpScriptSerialization.Tests
                         },
                         new List<Func<ConstructorParams, object>> {o => o.RequiredString})
                     : null;
+        }
+
+        [Fact]
+        public void PropertyCSScriptSerializer_can_use_custom_defaults()
+        {
+            ICSScriptSerializer _;
+            CSScriptSerializer.Serializers.TryRemove(typeof(ConstructorParams), out _);
+            CSScriptSerializer.Serializers[typeof(ConstructorParams)] =
+                new PropertyCSScriptSerializer<ConstructorParams>(
+                    new Dictionary<string, Func<ConstructorParams, object>>
+                    {
+                        {nameof(ConstructorParams.OptionalInt), o => o.OptionalInt}
+                    },
+                    new List<Func<ConstructorParams, object>> {o => o.RequiredString},
+                    new Dictionary<string, Func<ConstructorParams, object>>
+                    {
+                        {nameof(ConstructorParams.OptionalInt), o => 1}
+                    });
+
+            var input = new ConstructorParams("s") { OptionalInt = 1 };
+            var script = CSScriptSerializer.Serialize(input);
+            var output = CSScriptSerializer.Deserialize<ConstructorParams>(script);
+
+            Assert.Equal(input.RequiredString, output.RequiredString);
+            Assert.Null(output.OptionalInt);
+
+            CSScriptSerializer.Serializers.TryRemove(typeof(ConstructorParams), out _);
         }
     }
 }

@@ -9,7 +9,7 @@
   "packOptions": {
     "tags": [ "Roslyn", "CSharp", "C#", "CSX", "Script", "Serialization" ],
     "owners": [ "Andriy.Svyryd" ],
-    "releaseNotes": "Version 1.0.0-alpha1\r\n* Initial release",
+    "releaseNotes": "Version 1.0.0\r\n* Enable customizing the default values in PropertyCSScriptSerializer\r\n* Change ICSScriptSerializable.GetSerializer() to return ICSScriptSerializer\r\n* Fix parameters not being used in DeserializeAsync\r\n\r\nVersion 1.0.0-alpha1\r\n* Initial release",
     "projectUrl": "https://github.com/AndriySvyryd/CSharpScriptSerializer",
     "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
     "requireLicenseAcceptance": false,
@@ -27,8 +27,7 @@
   "frameworks": {
     "netstandard1.5": {
       "dependencies": {
-        "NETStandard.Library": "1.6.1-*",
-        "Microsoft.CSharp": "4.0.1"
+        "NETStandard.Library": "1.6.1-*"
       },
       "imports": [
         "dotnet5.6",
@@ -37,7 +36,6 @@
     },
     "net46": {
       "frameworkAssemblies": {
-        "Microsoft.CSharp": "",
         "System.Runtime": {
           "type": "build"
         }

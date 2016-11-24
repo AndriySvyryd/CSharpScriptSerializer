@@ -9,10 +9,10 @@ namespace CSharpScriptSerialization
     public class ConstructorCSScriptSerializer<T> : CSScriptSerializer
     {
         private ObjectCreationExpressionSyntax _objectCreationExpression;
-        private readonly IReadOnlyCollection<Func<T, object>> _parameterGetters;
+        private readonly IReadOnlyCollection<Func<T, object>> _constructorParameterGetters;
 
         public ConstructorCSScriptSerializer()
-            : this(parameterGetters: null)
+            : this(constructorParameterGetters: null)
         {
         }
 
@@ -22,10 +22,10 @@ namespace CSharpScriptSerialization
         {
         }
 
-        public ConstructorCSScriptSerializer(IReadOnlyCollection<Func<T, object>> parameterGetters)
+        public ConstructorCSScriptSerializer(IReadOnlyCollection<Func<T, object>> constructorParameterGetters)
             : base(typeof(T))
         {
-            _parameterGetters = parameterGetters;
+            _constructorParameterGetters = constructorParameterGetters;
         }
 
         protected virtual bool GenerateEmptyArgumentList => true;
@@ -33,8 +33,8 @@ namespace CSharpScriptSerialization
         public override ExpressionSyntax GetCreation(object obj) => GetObjectCreationExpression((T)obj);
 
         protected virtual ObjectCreationExpressionSyntax GetObjectCreationExpression(T obj)
-            => _parameterGetters == null
-               || _parameterGetters.Count == 0
+            => _constructorParameterGetters == null
+               || _constructorParameterGetters.Count == 0
                 ? GenerateEmptyArgumentList
                     ? GetObjectCreationExpression().WithArgumentList(SyntaxFactory.ArgumentList())
                     : GetObjectCreationExpression()
@@ -42,7 +42,7 @@ namespace CSharpScriptSerialization
                     .WithArgumentList(AddNewLine(SyntaxFactory.ArgumentList(
                         SyntaxFactory.SeparatedList<ArgumentSyntax>(
                             ToCommaSeparatedList(
-                                _parameterGetters.Select(a =>
+                                _constructorParameterGetters.Select(a =>
                                     SyntaxFactory.Argument(GetCreationExpression(a(obj)))))))));
 
         protected virtual ObjectCreationExpressionSyntax GetObjectCreationExpression()
