@@ -61,20 +61,22 @@ namespace CSharpScriptSerialization
         {
         }
 
+        // To not serialize properties give default that's always equal to the property value
         public PropertyCSScriptSerializer(IReadOnlyDictionary<string, Func<T, object>> propertyValueGetters,
             IReadOnlyCollection<Func<T, object>> constructorParameterGetters,
             IReadOnlyDictionary<string, Func<T, object>> propertyDefaultGetters)
             : this(constructorParameterGetters)
         {
-            var properties = typeof(T).GetTypeInfo()
-                .GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-                .ToDictionary(p => p.Name);
-            _propertyData = propertyValueGetters.Select(
-                p => new PropertyData(
-                    p.Key,
-                    properties[p.Key].PropertyType,
-                    p.Value,
-                    propertyDefaultGetters.GetValueOrDefault(p.Key, o => GetDefault(properties[p.Key].PropertyType))))
+            var referencedProperties = typeof(T).GetTypeInfo()
+                .GetProperties(BindingFlags.Instance | BindingFlags.Public)
+                .Where(p => propertyValueGetters.ContainsKey(p.Name));
+            _propertyData = typeof(T).GetRuntimeProperties().Where(IsCandidateProperty)
+                .Concat(referencedProperties).Distinct().Select(
+                    p => new PropertyData(
+                        p.Name,
+                        p.PropertyType,
+                        propertyValueGetters.GetValueOrDefault(p.Name, CreatePropertyInitializer(p)),
+                        propertyDefaultGetters.GetValueOrDefault(p.Name, o => GetDefault(p.PropertyType))))
                 .ToArray();
         }
 
