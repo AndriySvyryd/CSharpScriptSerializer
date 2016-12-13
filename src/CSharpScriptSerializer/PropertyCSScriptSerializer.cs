@@ -13,84 +13,54 @@ namespace CSharpScriptSerialization
         private readonly IReadOnlyCollection<PropertyData> _propertyData;
 
         public PropertyCSScriptSerializer()
-            : this((Func<T, object>[])null)
+            : this((Func<T, object>[]) null)
         {
         }
 
-        public PropertyCSScriptSerializer(IReadOnlyCollection<Func<T, object>> argumentGetters)
-            : this(typeof(T).GetRuntimeProperties().Where(IsCandidateProperty), argumentGetters)
+        public PropertyCSScriptSerializer(IReadOnlyCollection<Func<T, object>> constructorParameterGetters)
+            : this(propertyConditions: null, constructorParameterGetters: constructorParameterGetters)
         {
         }
 
-        public PropertyCSScriptSerializer(IEnumerable<PropertyInfo> properties)
-            : this(properties, constructorParameterGetters: null)
+        public PropertyCSScriptSerializer(IReadOnlyDictionary<string, Func<T, object, bool>> propertyConditions)
+            : this(propertyConditions, constructorParameterGetters: null)
         {
         }
 
-        public PropertyCSScriptSerializer(IReadOnlyDictionary<string, Func<T, object>> propertyValueGetters)
-            : this(propertyValueGetters, constructorParameterGetters: null)
-        {
-        }
-
-        public PropertyCSScriptSerializer(IEnumerable<PropertyInfo> properties,
+        public PropertyCSScriptSerializer(IReadOnlyDictionary<string, Func<T, object, bool>> propertyConditions,
             IReadOnlyCollection<Func<T, object>> constructorParameterGetters)
-            : this(properties.Select(p => new PropertyData(
-                p.Name,
-                p.PropertyType,
-                CreatePropertyInitializer(p),
-                o => GetDefault(p.PropertyType))).ToArray(),
-                constructorParameterGetters)
+            : this(propertyConditions, constructorParameterGetters, propertyValueGetters: null)
         {
         }
 
-        public PropertyCSScriptSerializer(IReadOnlyDictionary<string, Func<T, object>> propertyValueGetters,
-            IReadOnlyCollection<Func<T, object>> constructorParameterGetters)
-            : this(propertyValueGetters, constructorParameterGetters, new Dictionary<string, object>())
-        {
-        }
-
-        public PropertyCSScriptSerializer(IReadOnlyDictionary<string, Func<T, object>> propertyValueGetters,
+        public PropertyCSScriptSerializer(IReadOnlyDictionary<string, Func<T, object, bool>> propertyConditions,
             IReadOnlyCollection<Func<T, object>> constructorParameterGetters,
-            IReadOnlyDictionary<string, object> propertyDefaults)
-            : this(
-                propertyValueGetters,
-                constructorParameterGetters,
-                propertyDefaults.ToDictionary<KeyValuePair<string, object>, string, Func<T, object>>(
-                    p => p.Key,
-                    p => o => p.Value))
+            IReadOnlyDictionary<string, Func<T, object>> propertyValueGetters)
+            : base(constructorParameterGetters)
         {
-        }
-
-        // To not serialize properties give default that's always equal to the property value
-        public PropertyCSScriptSerializer(IReadOnlyDictionary<string, Func<T, object>> propertyValueGetters,
-            IReadOnlyCollection<Func<T, object>> constructorParameterGetters,
-            IReadOnlyDictionary<string, Func<T, object>> propertyDefaultGetters)
-            : this(constructorParameterGetters)
-        {
-            var referencedProperties = typeof(T).GetTypeInfo()
+            propertyConditions = propertyConditions ?? new Dictionary<string, Func<T, object, bool>>();
+            propertyValueGetters = propertyValueGetters ?? new Dictionary<string, Func<T, object>>();
+            var referencedPropertyNames = propertyConditions.Keys.Concat(propertyValueGetters.Keys).Distinct();
+            var allProperties = typeof(T).GetTypeInfo()
                 .GetProperties(BindingFlags.Instance | BindingFlags.Public)
-                .Where(p => propertyValueGetters.ContainsKey(p.Name));
-            _propertyData = typeof(T).GetRuntimeProperties().Where(IsCandidateProperty)
-                .Concat(referencedProperties).Distinct().Select(
+                .ToDictionary(p => p.Name);
+
+            _propertyData = referencedPropertyNames.Select(n => allProperties[n])
+                .Concat(allProperties.Values.Where(IsCandidateProperty)).Distinct()
+                .Select(
                     p => new PropertyData(
                         p.Name,
                         p.PropertyType,
                         propertyValueGetters.GetValueOrDefault(p.Name, CreatePropertyInitializer(p)),
-                        propertyDefaultGetters.GetValueOrDefault(p.Name, o => GetDefault(p.PropertyType))))
+                        propertyConditions.GetValueOrDefault(p.Name,
+                            (o, v) => !Equals(v, GetDefault(p.PropertyType)))))
                 .ToArray();
-        }
-
-        protected PropertyCSScriptSerializer(IReadOnlyCollection<PropertyData> propertyData,
-            IReadOnlyCollection<Func<T, object>> constructorParameterGetters)
-            : base(constructorParameterGetters)
-        {
-            _propertyData = propertyData;
         }
 
         protected override bool GenerateEmptyArgumentList => false;
 
         public override ExpressionSyntax GetCreation(object obj)
-            => GetObjectCreationExpression((T)obj);
+            => GetObjectCreationExpression((T) obj);
 
         protected override ObjectCreationExpressionSyntax GetObjectCreationExpression(T obj)
             => base.GetObjectCreationExpression(obj)
@@ -99,18 +69,11 @@ namespace CSharpScriptSerialization
                         SyntaxKind.ObjectInitializerExpression,
                         SyntaxFactory.SeparatedList<ExpressionSyntax>(
                             ToCommaSeparatedList(_propertyData
-                                .Select(p => new
-                                {
-                                    p.PropertyName,
-                                    p.PropertyType,
-                                    PropertyValue = p.PropertyValueGetter(obj),
-                                    PropertyDefault = p.PropertyDefaultGetter(obj)
-                                })
-                                .Where(p => !Equals(p.PropertyValue, p.PropertyDefault))
+                                .Where(p => p.PropertyCondition(obj, p.PropertyValueGetter(obj)))
                                 .Select(p => SyntaxFactory.AssignmentExpression(
                                     SyntaxKind.SimpleAssignmentExpression,
                                     SyntaxFactory.IdentifierName(p.PropertyName),
-                                    GetCreationExpression(p.PropertyValue))))))));
+                                    GetCreationExpression(p.PropertyValueGetter(obj)))))))));
 
         protected static Func<T, object> CreatePropertyInitializer(PropertyInfo property)
         {
@@ -129,18 +92,18 @@ namespace CSharpScriptSerialization
                 string propertyName,
                 Type propertyType,
                 Func<T, object> propertyValueGetter,
-                Func<T, object> propertyDefaultGetter)
+                Func<T, object, bool> propertyCondition)
             {
                 PropertyName = propertyName;
                 PropertyType = propertyType;
                 PropertyValueGetter = propertyValueGetter;
-                PropertyDefaultGetter = propertyDefaultGetter;
+                PropertyCondition = propertyCondition;
             }
 
             public string PropertyName { get; }
             public Type PropertyType { get; }
             public Func<T, object> PropertyValueGetter { get; }
-            public Func<T, object> PropertyDefaultGetter { get; }
+            public Func<T, object, bool> PropertyCondition { get; }
         }
     }
 }

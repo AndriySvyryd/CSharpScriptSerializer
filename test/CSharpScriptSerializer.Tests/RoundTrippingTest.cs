@@ -229,10 +229,6 @@ namespace CSharpScriptSerialization.Tests
 
             public ICSScriptSerializer GetSerializer()
                 => new PropertyCSScriptSerializer<SerializableConstructor>(
-                    new Dictionary<string, Func<SerializableConstructor, object>>
-                    {
-                        {nameof(OptionalInt), o => o.OptionalInt}
-                    },
                     new List<Func<SerializableConstructor, object>> {o => o.RequiredString});
         }
 
@@ -258,9 +254,9 @@ namespace CSharpScriptSerialization.Tests
             CSScriptSerializer.Serializers.TryRemove(typeof(ConstructorParams), out _);
             CSScriptSerializer.Serializers[typeof(ConstructorParams)] =
                 new PropertyCSScriptSerializer<ConstructorParams>(
-                    new Dictionary<string, Func<ConstructorParams, object>>
+                    new Dictionary<string, Func<ConstructorParams, object, bool>>
                     {
-                        {nameof(ConstructorParams.OptionalInt), o => o.OptionalInt}
+                        {nameof(ConstructorParams.OptionalInt), (o, v) => v != null}
                     },
                     new List<Func<ConstructorParams, object>> {o => o.RequiredString});
 
@@ -291,24 +287,24 @@ namespace CSharpScriptSerialization.Tests
             public ICSScriptSerializer TryCreate(Type type)
                 => type == typeof(ConstructorParams)
                     ? new PropertyCSScriptSerializer<ConstructorParams>(
-                        new Dictionary<string, Func<ConstructorParams, object>>
+                        new Dictionary<string, Func<ConstructorParams, object, bool>>
                         {
-                            {nameof(ConstructorParams.OptionalInt), o => o.OptionalInt}
+                            {nameof(ConstructorParams.OptionalInt), (o, v) => true}
                         },
                         new List<Func<ConstructorParams, object>> {o => o.RequiredString})
                     : null;
         }
 
         [Fact]
-        public void PropertyCSScriptSerializer_can_use_custom_defaults()
+        public void PropertyCSScriptSerializer_can_use_custom_values_and_defaults()
         {
             ICSScriptSerializer _;
             CSScriptSerializer.Serializers.TryRemove(typeof(ConstructorParams), out _);
             CSScriptSerializer.Serializers[typeof(ConstructorParams)] =
                 new PropertyCSScriptSerializer<ConstructorParams>(
-                    new Dictionary<string, Func<ConstructorParams, object>>
+                    new Dictionary<string, Func<ConstructorParams, object, bool>>
                     {
-                        {nameof(ConstructorParams.OptionalInt), o => o.OptionalInt}
+                        {nameof(ConstructorParams.OptionalInt), (o, v) => (int?) v != 1}
                     },
                     new List<Func<ConstructorParams, object>> {o => o.RequiredString},
                     new Dictionary<string, Func<ConstructorParams, object>>
@@ -316,7 +312,7 @@ namespace CSharpScriptSerialization.Tests
                         {nameof(ConstructorParams.OptionalInt), o => 1}
                     });
 
-            var input = new ConstructorParams("s") { OptionalInt = 1 };
+            var input = new ConstructorParams("s") { OptionalInt = 2 };
             var script = CSScriptSerializer.Serialize(input);
             var output = CSScriptSerializer.Deserialize<ConstructorParams>(script);
 
