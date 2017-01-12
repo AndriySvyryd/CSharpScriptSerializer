@@ -148,7 +148,21 @@ namespace CSharpScriptSerialization.Tests
             Default = 0,
             FirstFlag = 1 << 0,
             SecondFlag = 1 << 1,
-            ThirdFlag = 1 << 2
+            ThirdFlag = 1 << 2,
+            SecondAndThird = SecondFlag | ThirdFlag,
+            FourthFlag = 1 << 3
+        }
+
+        [Fact]
+        public void Combined_flag_enum()
+        {
+            var input = FlagsEnum.FirstFlag| FlagsEnum.SecondAndThird;
+            var script = CSScriptSerializer.Serialize(input);
+            var output = CSScriptSerializer.Deserialize<FlagsEnum>(script);
+
+            Assert.Equal(input, output);
+            Assert.Equal(typeof(RoundtrippingTest).Name + "." + typeof(FlagsEnum).Name + "." + FlagsEnum.FirstFlag + " | "
+                + typeof(RoundtrippingTest).Name + "." + typeof(FlagsEnum).Name + "." + FlagsEnum.SecondAndThird, script);
         }
 
         [Fact]

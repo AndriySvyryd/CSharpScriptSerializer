@@ -21,25 +21,24 @@ namespace CSharpScriptSerialization
                 : GetSimpleValue(name);
         }
 
-        protected virtual ExpressionSyntax GetCompositeValue(Enum obj)
+        protected virtual ExpressionSyntax GetCompositeValue(Enum flags)
         {
-            var simpleValues = new List<ExpressionSyntax>();
-            var defaultValue = Enum.ToObject(Type, value: 0);
-            foreach (Enum currValue in Enum.GetValues(Type))
+            var simpleValues = new HashSet<Enum>(flags.GetFlags());
+            foreach (var currentValue in simpleValues.ToList())
             {
-                if (currValue.Equals(defaultValue))
+                var decomposedValues = currentValue.GetFlags();
+                if (decomposedValues.Count > 1)
                 {
-                    continue;
-                }
-
-                if (obj.HasFlag(currValue))
-                {
-                    simpleValues.Add(GetSimpleValue(Enum.GetName(Type, currValue)));
+                    simpleValues.ExceptWith(decomposedValues.Where(v => !Equals(v, currentValue)));
                 }
             }
 
-            return simpleValues.Aggregate((previous, current) =>
-                SyntaxFactory.BinaryExpression(SyntaxKind.BitwiseOrExpression, previous, current));
+            return simpleValues.Aggregate((ExpressionSyntax) null,
+                (previous, current) =>
+                    previous == null
+                        ? GetSimpleValue(Enum.GetName(Type, current))
+                        : SyntaxFactory.BinaryExpression(
+                            SyntaxKind.BitwiseOrExpression, previous, GetSimpleValue(Enum.GetName(Type, current))));
         }
 
         protected virtual ExpressionSyntax GetSimpleValue(string name)

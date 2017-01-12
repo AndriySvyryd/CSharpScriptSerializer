@@ -5,20 +5,21 @@ namespace CSharpScriptSerialization
 {
     internal static class Extensions
     {
-        internal static IEnumerable<T> GetFlags<T>(this T flags)
+        internal static IReadOnlyCollection<Enum> GetFlags(this Enum flags)
         {
-            var values = new List<T>();
-            var defaultValue = Enum.ToObject(typeof(T), value: 0);
-            foreach (Enum currValue in Enum.GetValues(typeof(T)))
+            var values = new List<Enum>();
+            var type = flags.GetType();
+            var defaultValue = Enum.ToObject(type, value: 0);
+            foreach (Enum currValue in Enum.GetValues(type))
             {
                 if (currValue.Equals(defaultValue))
                 {
                     continue;
                 }
 
-                if (((Enum)(object)flags).HasFlag(currValue))
+                if (flags.HasFlag(currValue))
                 {
-                    values.Add((T)(object)currValue);
+                    values.Add(currValue);
                 }
             }
 
