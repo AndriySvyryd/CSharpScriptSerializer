@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Xunit;
 
 namespace CSharpScriptSerialization.Tests
@@ -163,6 +162,25 @@ namespace CSharpScriptSerialization.Tests
             Assert.Equal(input, output);
             Assert.Equal(typeof(RoundtrippingTest).Name + "." + typeof(FlagsEnum).Name + "." + FlagsEnum.FirstFlag + " | "
                 + typeof(RoundtrippingTest).Name + "." + typeof(FlagsEnum).Name + "." + FlagsEnum.SecondAndThird, script);
+        }
+
+        [Fact]
+        public void VerbatimStrings()
+        {
+            ValidateStringLiteral("\r", verbatim: true);
+            ValidateStringLiteral("\n", verbatim: true);
+            ValidateStringLiteral("\"", verbatim: false);
+            ValidateStringLiteral("@", verbatim: false);
+            ValidateStringLiteral("A", verbatim: false);
+        }
+
+        private void ValidateStringLiteral(string input, bool verbatim)
+        {
+            var script = CSScriptSerializer.Serialize(input);
+            Assert.Equal(verbatim ? '@' : '"', script[0]);
+
+            var output = CSScriptSerializer.Deserialize<string>(script);
+            Assert.Equal(input, output);
         }
 
         [Fact]
