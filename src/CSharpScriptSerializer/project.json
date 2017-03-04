@@ -1,5 +1,5 @@
 ﻿{
-  "version": "1.1.1-*",
+  "version": "1.1.2-*",
   "name": "CSharpScriptSerializer",
   "title": "CSharpScriptSerializer",
   "description": "Serialize to C# scripts",
@@ -9,7 +9,7 @@
   "packOptions": {
     "tags": [ "Roslyn", "CSharp", "C#", "CSX", "Script", "Serialization" ],
     "owners": [ "Andriy.Svyryd" ],
-    "releaseNotes": "Version 1.1.1\r\n* Use verbatim literals for multi-line strings\r\n* Remove redundant flags enum values\r\nVersion 1.1.0\r\n* Enable customizing the property serialization condition in PropertyCSScriptSerializer\r\nVersion 1.0.0\r\n* Enable customizing the default values in PropertyCSScriptSerializer\r\n* Change ICSScriptSerializable.GetSerializer() to return ICSScriptSerializer\r\n* Fix parameters not being used in DeserializeAsync\r\n\r\nVersion 1.0.0-alpha1\r\n* Initial release",
+    "releaseNotes": "Version 1.1.2\r\n* Increase max length for string literals\r\nVersion 1.1.1\r\n* Use verbatim literals for multi-line strings\r\n* Remove redundant flags enum values\r\nVersion 1.1.0\r\n* Enable customizing the property serialization condition in PropertyCSScriptSerializer\r\nVersion 1.0.0\r\n* Enable customizing the default values in PropertyCSScriptSerializer\r\n* Change ICSScriptSerializable.GetSerializer() to return ICSScriptSerializer\r\n* Fix parameters not being used in DeserializeAsync\r\n\r\nVersion 1.0.0-alpha1\r\n* Initial release",
     "projectUrl": "https://github.com/AndriySvyryd/CSharpScriptSerializer",
     "licenseUrl": "http://www.apache.org/licenses/LICENSE-2.0",
     "requireLicenseAcceptance": false,

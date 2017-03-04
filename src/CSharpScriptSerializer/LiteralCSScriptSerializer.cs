@@ -35,7 +35,8 @@ namespace CSharpScriptSerialization
                 {
                     typeof(string), x => SyntaxFactory.Literal(
                         SyntaxTriviaList.Empty,
-                        CSharpObjectFormatter.Instance.FormatObject(x, new PrintOptions {EscapeNonPrintableCharacters = false}),
+                        CSharpObjectFormatter.Instance.FormatObject(x,
+                            new PrintOptions {EscapeNonPrintableCharacters = false, MaximumOutputLength = int.MaxValue}),
                         (string)x,
                         SyntaxTriviaList.Empty)
                 },

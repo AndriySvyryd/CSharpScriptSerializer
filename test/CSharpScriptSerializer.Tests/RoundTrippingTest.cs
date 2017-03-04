@@ -184,6 +184,34 @@ namespace CSharpScriptSerialization.Tests
         }
 
         [Fact]
+        public void LongString()
+        {
+            var input = @"
+                                                                               1
+                                                                               2
+                                                                               3
+                                                                               4
+                                                                               5
+                                                                               6
+                                                                               7
+                                                                               8
+                                                                               9
+                                                                              10
+                                                                              11
+                                                                              12
+                                                                              13
+                                                                              14
+                                                                              15
+                                                                              16
+                                                                              17
+                                                                              18
+                                                                              19";
+            var script = CSScriptSerializer.Serialize(input);
+            var output = CSScriptSerializer.Deserialize<string>(script);
+            Assert.Equal(input, output);
+        }
+
+        [Fact]
         public void Self_referencing_type()
         {
             var input = new Recursive();
