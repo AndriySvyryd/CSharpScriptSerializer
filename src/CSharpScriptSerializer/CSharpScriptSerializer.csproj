@@ -1,0 +1,55 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <AssemblyName>CSharpScriptSerializer</AssemblyName>
+    <PackageId>CSharpScriptSerializer</PackageId>
+    <AssemblyTitle>CSharpScriptSerializer</AssemblyTitle>
+    <Title>CSharpScriptSerializer</Title>
+    <VersionPrefix>1.2.0</VersionPrefix>
+    <TargetFrameworks>netstandard1.5;net46</TargetFrameworks>
+    <NetStandardImplicitPackageVersion Condition=" '$(TargetFramework)' == 'netstandard1.5' ">1.6.1</NetStandardImplicitPackageVersion>
+    <PackageTargetFallback Condition=" '$(TargetFramework)' == 'netstandard1.5' ">
+      $(PackageTargetFallback);portable-net45+win8
+    </PackageTargetFallback>
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+    <Description>Serialize to C# scripts</Description>
+    <Authors>Andriy Svyryd</Authors>
+    <PackageTags>Roslyn;CSharp;C#;CSX;Script;Serialization</PackageTags>
+    <PackageReleaseNotes>Version 1.2.0
+* Update to Roslyn V2
+Version 1.1.2
+* Increase max length for string literals
+Version 1.1.1
+* Use verbatim literals for multi-line strings
+* Remove redundant flags enum values
+Version 1.1.0
+* Enable customizing the property serialization condition in PropertyCSScriptSerializer
+Version 1.0.0
+* Enable customizing the default values in PropertyCSScriptSerializer
+* Change ICSScriptSerializable.GetSerializer() to return ICSScriptSerializer
+* Fix parameters not being used in DeserializeAsync
+
+Version 1.0.0-alpha1
+* Initial release</PackageReleaseNotes>
+    <PackageProjectUrl>https://github.com/AndriySvyryd/CSharpScriptSerializer</PackageProjectUrl>
+    <PackageLicenseUrl>http://www.apache.org/licenses/LICENSE-2.0</PackageLicenseUrl>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/AndriySvyryd/CSharpScriptSerializer.git</RepositoryUrl>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <IncludeSymbols>True</IncludeSymbols>
+    <IncludeSource>True</IncludeSource>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="2.0.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="2.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net46' ">
+    <Reference Include="System.Runtime" />
+    <Reference Include="System" />
+    <Reference Include="Microsoft.CSharp" />
+  </ItemGroup>
+
+</Project>
