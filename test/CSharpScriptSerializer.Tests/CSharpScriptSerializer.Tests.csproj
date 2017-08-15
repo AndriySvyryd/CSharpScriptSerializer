@@ -3,12 +3,9 @@
   <PropertyGroup>
     <AssemblyName>CSharpScriptSerializer.Tests</AssemblyName>
     <PackageId>CSharpScriptSerializer.Tests</PackageId>
-    <VersionPrefix>1.2.0</VersionPrefix>
+    <VersionPrefix>1.3.0</VersionPrefix>
     <TargetFrameworks>netcoreapp1.1;net46</TargetFrameworks>
     <RuntimeFrameworkVersion Condition=" '$(TargetFramework)' == 'netcoreapp1.1' ">1.1.1</RuntimeFrameworkVersion>
-    <PackageTargetFallback Condition=" '$(TargetFramework)' == 'netcoreapp1.1' ">
-      $(PackageTargetFallback);portable-net45+win8
-    </PackageTargetFallback>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
