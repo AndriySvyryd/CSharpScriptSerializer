@@ -17,28 +17,28 @@ namespace CSharpScriptSerialization
 {
     public abstract class CSScriptSerializer : ICSScriptSerializer
     {
-        protected CSScriptSerializer(Type type)
-        {
-            Type = type;
-        }
-
-        public Type Type { get; }
-
-        public abstract ExpressionSyntax GetCreation(object obj);
-
         public static readonly List<ICSScriptSerializerFactory> SerializerFactories =
             new List<ICSScriptSerializerFactory>();
 
         public static readonly ConcurrentDictionary<Type, ICSScriptSerializer> Serializers =
             new ConcurrentDictionary<Type, ICSScriptSerializer>();
 
-        public static T Deserialize<T>(string script)
-            => DeserializeAsync<T>(script).GetAwaiter().GetResult();
+        private static readonly ConcurrentDictionary<Type, object> TypeDefaults =
+            new ConcurrentDictionary<Type, object>();
+
+        protected CSScriptSerializer(Type type) => Type = type;
+
+        public Type Type { get; }
+
+        public abstract ExpressionSyntax GetCreation(object obj);
+
+        public static T Deserialize<T>(string script) => DeserializeAsync<T>(script).GetAwaiter().GetResult();
 
         public static Task<T> DeserializeAsync<T>(string script)
             => DeserializeAsync<T>(script, Enumerable.Empty<Assembly>(), Enumerable.Empty<string>());
 
-        public static T Deserialize<T>(string script, IEnumerable<Assembly> referencedAssemblies, IEnumerable<string> imports)
+        public static T Deserialize<T>(string script, IEnumerable<Assembly> referencedAssemblies,
+            IEnumerable<string> imports)
             => DeserializeAsync<T>(script, referencedAssemblies, imports).GetAwaiter().GetResult();
 
         public static Task<T> DeserializeAsync<T>(
@@ -73,30 +73,23 @@ namespace CSharpScriptSerialization
             }
         }
 
-        public static CompilationUnitSyntax GetCompilationUnitExpression(object obj)
-            => CompilationUnit()
-                .WithMembers(
-                    SingletonList<MemberDeclarationSyntax>(
-                        GlobalStatement(
-                            ExpressionStatement(GetCreationExpression(obj))
-                                .WithSemicolonToken(MissingToken(SyntaxKind.SemicolonToken)))));
+        public static CompilationUnitSyntax GetCompilationUnitExpression(object obj) => CompilationUnit()
+            .WithMembers(
+                SingletonList<MemberDeclarationSyntax>(
+                    GlobalStatement(
+                        ExpressionStatement(GetCreationExpression(obj))
+                            .WithSemicolonToken(MissingToken(SyntaxKind.SemicolonToken)))));
 
-        public static ExpressionSyntax GetCreationExpression(object obj)
-        {
-            return GetSerializer(obj).GetCreation(obj);
-        }
+        public static ExpressionSyntax GetCreationExpression(object obj) => GetSerializer(obj).GetCreation(obj);
 
         private static ICSScriptSerializer GetSerializer(object obj)
         {
-            if (obj == null)
+            switch (obj)
             {
-                return NullCSScriptSerializer.Instance;
-            }
-
-            var serializable = obj as ICSScriptSerializable;
-            if (serializable != null)
-            {
-                return serializable.GetSerializer();
+                case null:
+                    return NullCSScriptSerializer.Instance;
+                case ICSScriptSerializable serializable:
+                    return serializable.GetSerializer();
             }
 
             var type = UnwrapNullableType(obj.GetType());
@@ -166,6 +159,16 @@ namespace CSharpScriptSerialization
                     new Func<TimeSpan, object>[] {t => t.Ticks});
             }
 
+            if (typeof(Type).GetTypeInfo().IsAssignableFrom(type))
+            {
+                return new TypeCSScriptSerializer(type);
+            }
+
+            if (type == typeof(object))
+            {
+                return new ConstructorCSScriptSerializer<object>();
+            }
+
             if (type.IsArray)
             {
                 return new ArrayCSScriptSerializer(type);
@@ -174,6 +177,7 @@ namespace CSharpScriptSerialization
             if (type.IsConstructedGenericType)
             {
                 var genericDefinition = type.GetGenericTypeDefinition();
+
                 if (genericDefinition == typeof(Tuple<>))
                 {
                     return CreateConstructorCSScriptSerializer(type, CreateTupleGetters(type, arity: 1));
@@ -205,6 +209,39 @@ namespace CSharpScriptSerialization
                 if (genericDefinition == typeof(Tuple<,,,,,,,>))
                 {
                     return CreateConstructorCSScriptSerializer(type, CreateTupleGetters(type, arity: 8));
+                }
+
+                if (genericDefinition == typeof(ValueTuple<>))
+                {
+                    return new ValueTupleCSScriptSerializer(type, CreateValueTupleGetters(type, arity: 1));
+                }
+                if (genericDefinition == typeof(ValueTuple<,>))
+                {
+                    return new ValueTupleCSScriptSerializer(type, CreateValueTupleGetters(type, arity: 2));
+                }
+                if (genericDefinition == typeof(ValueTuple<,,>))
+                {
+                    return new ValueTupleCSScriptSerializer(type, CreateValueTupleGetters(type, arity: 3));
+                }
+                if (genericDefinition == typeof(ValueTuple<,,,>))
+                {
+                    return new ValueTupleCSScriptSerializer(type, CreateValueTupleGetters(type, arity: 4));
+                }
+                if (genericDefinition == typeof(ValueTuple<,,,,>))
+                {
+                    return new ValueTupleCSScriptSerializer(type, CreateValueTupleGetters(type, arity: 5));
+                }
+                if (genericDefinition == typeof(ValueTuple<,,,,,>))
+                {
+                    return new ValueTupleCSScriptSerializer(type, CreateValueTupleGetters(type, arity: 6));
+                }
+                if (genericDefinition == typeof(ValueTuple<,,,,,,>))
+                {
+                    return new ValueTupleCSScriptSerializer(type, CreateValueTupleGetters(type, arity: 7));
+                }
+                if (genericDefinition == typeof(ValueTuple<,,,,,,,>))
+                {
+                    return new ValueTupleCSScriptSerializer(type, CreateValueTupleGetters(type, arity: 8));
                 }
             }
 
@@ -259,8 +296,7 @@ namespace CSharpScriptSerialization
 
         private static CSScriptSerializer CreateConstructorCSScriptSerializer(
             Type type,
-            IReadOnlyCollection<Func<object, object>> parameterGetters)
-            => (CSScriptSerializer)GetDeclaredConstructor(
+            IReadOnlyCollection<Func<object, object>> parameterGetters) => (CSScriptSerializer)GetDeclaredConstructor(
                 typeof(ConstructorCSScriptSerializer<>).MakeGenericType(type),
                 new[] {typeof(IReadOnlyCollection<Func<object, object>>)})
                 .Invoke(new object[] {parameterGetters});
@@ -268,8 +304,7 @@ namespace CSharpScriptSerialization
         private static CSScriptSerializer CreateCollectionCSScriptSerializer(
             Type type,
             IReadOnlyCollection<Func<object, object>> elementDecomposers,
-            Func<object, IEnumerable<object>> getEnumerable)
-            => (CSScriptSerializer)GetDeclaredConstructor(
+            Func<object, IEnumerable<object>> getEnumerable) => (CSScriptSerializer)GetDeclaredConstructor(
                 typeof(CollectionCSScriptSerializer<>).MakeGenericType(type),
                 new[] {typeof(IReadOnlyCollection<Func<object, object>>), typeof(Func<object, IEnumerable<object>>)})
                 .Invoke(new object[] {elementDecomposers, getEnumerable});
@@ -281,6 +316,17 @@ namespace CSharpScriptSerialization
             {
                 var itemProperty = type.GetTypeInfo().GetProperty("Item" + i);
                 getters.Add(o => itemProperty.GetValue(o));
+            }
+            return getters.ToArray();
+        }
+
+        private static Func<object, object>[] CreateValueTupleGetters(Type type, int arity)
+        {
+            var getters = new List<Func<object, object>>();
+            for (var i = 1; i <= arity; i++)
+            {
+                var itemField = type.GetTypeInfo().GetField("Item" + i);
+                getters.Add(o => itemField.GetValue(o));
             }
             return getters.ToArray();
         }
@@ -312,17 +358,12 @@ namespace CSharpScriptSerialization
             return types.Count == 1 ? types[index: 0].GetTypeInfo().GenericTypeArguments.FirstOrDefault() : null;
         }
 
-        private static readonly ConcurrentDictionary<Type, object> TypeDefaults =
-            new ConcurrentDictionary<Type, object>();
-
         protected static object GetDefault(Type type)
             => type.GetTypeInfo().IsValueType ? TypeDefaults.GetOrAdd(type, Activator.CreateInstance) : null;
 
-        protected static bool IsDefault(object obj)
-            => IsDefault(obj, obj.GetType());
+        protected static bool IsDefault(object obj) => IsDefault(obj, obj.GetType());
 
-        protected static bool IsDefault(object obj, Type type)
-            => obj == null || obj.Equals(GetDefault(type));
+        protected static bool IsDefault(object obj, Type type) => obj == null || obj.Equals(GetDefault(type));
 
         protected static IEnumerable<Type> GetGenericTypeImplementations(Type type, Type interfaceOrBaseType)
         {
@@ -334,7 +375,7 @@ namespace CSharpScriptSerialization
                     : GetBaseTypes(type))
                     .Union(new[] {type})
                     .Where(t => t.GetTypeInfo().IsGenericType
-                                && (t.GetGenericTypeDefinition() == interfaceOrBaseType));
+                                && t.GetGenericTypeDefinition() == interfaceOrBaseType);
             }
 
             return Enumerable.Empty<Type>();
@@ -441,7 +482,7 @@ namespace CSharpScriptSerialization
                         GetArrayRanks(type)));
             }
 
-            return GetNameSyntax(type, null);
+            return GetNameSyntax(type, genericArguments: null);
         }
 
         private static NameSyntax GetNameSyntax(Type type, List<Type> genericArguments)
@@ -454,8 +495,8 @@ namespace CSharpScriptSerialization
             if (declaringType != null)
             {
                 var genericParameters = declaringType.GetTypeInfo().GenericTypeParameters;
-                declaringTypeGenericArguments = genericArguments.GetRange(0, genericParameters.Length);
-                genericArguments.RemoveRange(0, genericParameters.Length);
+                declaringTypeGenericArguments = genericArguments.GetRange(index: 0, count: genericParameters.Length);
+                genericArguments.RemoveRange(index: 0, count: genericParameters.Length);
             }
 
             var simpleName = genericArguments.Count > 0
@@ -491,8 +532,7 @@ namespace CSharpScriptSerialization
                     .Concat(GetArrayRanks(type.GetElementType()));
 
         protected static TSyntax AddNewLine<TSyntax>(TSyntax expression)
-            where TSyntax : SyntaxNode
-            => expression.FullSpan.Length > 120
+            where TSyntax : SyntaxNode => expression.FullSpan.Length > 120
                 ? expression.WithLeadingTrivia(CarriageReturnLineFeed)
                     .WithTrailingTrivia(CarriageReturnLineFeed)
                 : expression;

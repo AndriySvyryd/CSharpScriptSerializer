@@ -39,7 +39,10 @@ namespace CSharpScriptSerialization
         public CollectionCSScriptSerializer(
             IReadOnlyCollection<Func<T, object>> constructorParameterGetters,
             Func<T, IEnumerable<object>> getEnumerable)
-            : this(elementDecomposers: null, constructorParameterGetters: constructorParameterGetters, getEnumerable: getEnumerable)
+            : this(
+                elementDecomposers: null,
+                constructorParameterGetters: constructorParameterGetters,
+                getEnumerable: getEnumerable)
         {
         }
 
@@ -81,8 +84,7 @@ namespace CSharpScriptSerialization
 
         protected override bool GenerateEmptyArgumentList => false;
 
-        public override ExpressionSyntax GetCreation(object obj)
-            => GetObjectCreationExpression((T)obj);
+        public override ExpressionSyntax GetCreation(object obj) => GetObjectCreationExpression((T)obj);
 
         protected override ObjectCreationExpressionSyntax GetObjectCreationExpression(T obj)
             => base.GetObjectCreationExpression(obj)

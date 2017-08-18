@@ -10,19 +10,6 @@ namespace CSharpScriptSerialization
 {
     public class LiteralCSScriptSerializer : CSScriptSerializer
     {
-        public LiteralCSScriptSerializer(Type type, SyntaxKind kind)
-            : base(type)
-        {
-            Kind = kind;
-        }
-
-        protected SyntaxKind Kind { get; }
-
-        public override ExpressionSyntax GetCreation(object obj)
-            => SyntaxFactory.LiteralExpression(
-                Kind,
-                LiteralFactories[obj.GetType()](obj));
-
         private static readonly Dictionary<Type, Func<object, SyntaxToken>> LiteralFactories =
             new Dictionary<Type, Func<object, SyntaxToken>>
             {
@@ -47,5 +34,15 @@ namespace CSharpScriptSerialization
                 {typeof(ushort), x => SyntaxFactory.Literal((ushort)x)},
                 {typeof(sbyte), x => SyntaxFactory.Literal((sbyte)x)}
             };
+
+        public LiteralCSScriptSerializer(Type type, SyntaxKind kind)
+            : base(type)
+            => Kind = kind;
+
+        protected SyntaxKind Kind { get; }
+
+        public override ExpressionSyntax GetCreation(object obj) => SyntaxFactory.LiteralExpression(
+            Kind,
+            LiteralFactories[obj.GetType()](obj));
     }
 }

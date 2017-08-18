@@ -72,11 +72,14 @@ namespace CSharpScriptSerialization.Tests
                 NullableGuid = new Guid(guid.ToString()),
                 NullableEnumInt32 = null,
                 NullableFlagsEnum = FlagsEnum.Default,
+                Object = null,
                 IntArray = new[] {new int?[,] {{1}, {2}}, new int?[,] {{null}, {3}}},
                 DecimalArray = new[,] {{new decimal[] {1, 2}, new decimal[] {3, 4}}},
                 StringList = new List<string> {"1", null},
                 Dictionary = new Dictionary<bool, bool?> {{false, null}, {true, true}},
-                Tuple = Tuple.Create(-1, "minus one")
+                Tuple = Tuple.Create(-1, "minus one"),
+                ValueTuple = (-1, "minus one"),
+                Type = typeof(AllSupportedTypes)
             };
 
             var script = CSScriptSerializer.Serialize(input);
@@ -129,11 +132,14 @@ namespace CSharpScriptSerialization.Tests
             public sbyte? NullableSignedByte { get; set; }
             public EnumInt32? NullableEnumInt32 { get; set; }
             public FlagsEnum? NullableFlagsEnum { get; set; }
+            public object Object { get; set; }
             public int?[][,] IntArray { get; set; }
             public decimal[,][] DecimalArray { get; set; }
             public List<string> StringList { get; set; }
             public Dictionary<bool, bool?> Dictionary { get; set; }
             public Tuple<int, string> Tuple { get; set; }
+            public (int, string) ValueTuple { get; set; }
+            public Type Type { get; set; }
         }
 
         public enum EnumInt32
@@ -153,7 +159,7 @@ namespace CSharpScriptSerialization.Tests
         }
 
         [Fact]
-        public void Combined_flag_enum()
+        public void CombinedFlagsEnum()
         {
             var input = FlagsEnum.FirstFlag| FlagsEnum.SecondAndThird;
             var script = CSScriptSerializer.Serialize(input);
@@ -212,7 +218,7 @@ namespace CSharpScriptSerialization.Tests
         }
 
         [Fact]
-        public void Self_referencing_type()
+        public void SelfReferencingType()
         {
             var input = new Recursive();
             var script = CSScriptSerializer.Serialize(input);
@@ -356,7 +362,7 @@ namespace CSharpScriptSerialization.Tests
         }
 
         [Fact]
-        public void PropertyCSScriptSerializer_can_use_custom_values_and_defaults()
+        public void PropertyCSScriptSerializerCanUseSustomValuesAndDefaults()
         {
             ICSScriptSerializer _;
             CSScriptSerializer.Serializers.TryRemove(typeof(ConstructorParams), out _);

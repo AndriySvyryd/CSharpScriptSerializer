@@ -33,7 +33,7 @@ namespace CSharpScriptSerialization
                 }
             }
 
-            return simpleValues.Aggregate((ExpressionSyntax) null,
+            return simpleValues.Aggregate((ExpressionSyntax)null,
                 (previous, current) =>
                     previous == null
                         ? GetSimpleValue(Enum.GetName(Type, current))

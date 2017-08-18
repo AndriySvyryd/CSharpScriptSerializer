@@ -8,8 +8,8 @@ namespace CSharpScriptSerialization
 {
     public class ConstructorCSScriptSerializer<T> : CSScriptSerializer
     {
-        private ObjectCreationExpressionSyntax _objectCreationExpression;
         private readonly IReadOnlyCollection<Func<T, object>> _constructorParameterGetters;
+        private ObjectCreationExpressionSyntax _objectCreationExpression;
 
         public ConstructorCSScriptSerializer()
             : this(constructorParameterGetters: null)
@@ -23,10 +23,7 @@ namespace CSharpScriptSerialization
         }
 
         public ConstructorCSScriptSerializer(IReadOnlyCollection<Func<T, object>> constructorParameterGetters)
-            : base(typeof(T))
-        {
-            _constructorParameterGetters = constructorParameterGetters;
-        }
+            : base(typeof(T)) => _constructorParameterGetters = constructorParameterGetters;
 
         protected virtual bool GenerateEmptyArgumentList => true;
 
