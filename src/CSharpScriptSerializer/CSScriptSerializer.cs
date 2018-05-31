@@ -341,12 +341,15 @@ namespace CSharpScriptSerialization
         protected static bool IsInitializable(Type type) => type.GetRuntimeProperties().Where(IsCandidateProperty).Any();
 
         protected static bool IsCandidateProperty(PropertyInfo property)
-            => !(property.GetMethod ?? property.SetMethod).IsStatic
-               && property.GetIndexParameters().Length == 0
+            => IsUsableProperty(property)
+               && !(property.GetMethod ?? property.SetMethod).IsStatic
                && property.CanRead
-               && property.CanWrite
                && property.GetMethod != null
-               && property.GetMethod.IsPublic
+               && property.GetMethod.IsPublic;
+
+        protected static bool IsUsableProperty(PropertyInfo property)
+            => property.GetIndexParameters().Length == 0
+               && property.CanWrite
                && property.SetMethod != null
                && property.SetMethod.IsPublic;
 

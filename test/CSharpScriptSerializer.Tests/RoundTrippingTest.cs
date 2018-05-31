@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using Xunit;
 
 namespace CSharpScriptSerialization.Tests
@@ -272,6 +271,105 @@ namespace CSharpScriptSerialization.Tests
         }
 
         [Fact]
+        public void HiddenProperties()
+        {
+            var input = new HiddenDerived {Property = 2};
+            ((HiddenBase)input).Property = "1";
+
+            var script = CSScriptSerializer.Serialize(input);
+            var output = CSScriptSerializer.Deserialize<HiddenDerived>(script);
+
+            Assert.Equal(input.Property, output.Property);
+            Assert.Equal(((HiddenBase)input).Property, ((HiddenBase)output).Property);
+        }
+
+        public class HiddenBase
+        {
+            public virtual string Property { get; set; }
+        }
+
+        public class HiddenDerived : HiddenBase
+        {
+            public new int Property { get; set; }
+        }
+
+        [Fact]
+        public void HiddenPropertiesWithCustomValuesAndDefaults()
+        {
+            ICSScriptSerializer _;
+            CSScriptSerializer.Serializers.TryRemove(typeof(HiddenDerived), out _);
+            CSScriptSerializer.Serializers[typeof(HiddenDerived)] =
+                new PropertyCSScriptSerializer<HiddenDerived>(
+                    new Dictionary<string, Func<HiddenDerived, object, bool>>
+                    {
+                        {"Property", (o, v) => (int)v != 2}
+                    },
+                    null,
+                    new Dictionary<string, Func<HiddenDerived, object>>
+                    {
+                        {"Property", o => o.Property + 1}
+                    },
+                    new Dictionary<string, Func<HiddenDerived, object, bool>>
+                    {
+                        {"HiddenBase.Property", (o, v) => (string)v != "11"}
+                    },
+                    new Dictionary<string, Func<HiddenDerived, object>>
+                    {
+                        {"HiddenBase.Property", o => ((HiddenBase)o).Property + "1"}
+                    });
+
+            var input = new HiddenDerived { Property = 1 };
+            ((HiddenBase)input).Property = "1";
+
+            var script = CSScriptSerializer.Serialize(input);
+            var output = CSScriptSerializer.Deserialize<HiddenDerived>(script);
+
+            Assert.Equal(0, output.Property);
+            Assert.Null(((HiddenBase)output).Property);
+
+            input = new HiddenDerived { Property = 2 };
+            ((HiddenBase)input).Property = "2";
+
+            script = CSScriptSerializer.Serialize(input);
+            output = CSScriptSerializer.Deserialize<HiddenDerived>(script);
+
+            Assert.Equal(3, output.Property);
+            Assert.Equal("21", ((HiddenBase)output).Property);
+
+            CSScriptSerializer.Serializers.TryRemove(typeof(HiddenDerived), out _);
+        }
+
+        [Fact]
+        public void OverridenProperties()
+        {
+            var input = new OverrideDerived { Property = "1" };
+
+            var script = CSScriptSerializer.Serialize(input);
+            var output = CSScriptSerializer.Deserialize<OverrideDerived>(script);
+
+            Assert.Equal(input.Property, output.Property);
+            Assert.Equal(input.GetSetCount(), output.GetSetCount());
+        }
+
+        public class OverrideDerived : HiddenBase
+        {
+            private string _property;
+            private int _setCount;
+
+            public override string Property
+            {
+                get => _property;
+                set
+                {
+                    _setCount++;
+                    _property = value;
+                }
+            }
+
+            public int GetSetCount() => _setCount;
+        }
+
+        [Fact]
         public void Serializable()
         {
             var input = new SerializableConstructor("s") {OptionalInt = 1};
@@ -362,7 +460,7 @@ namespace CSharpScriptSerialization.Tests
         }
 
         [Fact]
-        public void PropertyCSScriptSerializerCanUseSustomValuesAndDefaults()
+        public void PropertyCSScriptSerializerCanUseCustomValuesAndDefaults()
         {
             ICSScriptSerializer _;
             CSScriptSerializer.Serializers.TryRemove(typeof(ConstructorParams), out _);
