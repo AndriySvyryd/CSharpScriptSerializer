@@ -3,7 +3,7 @@
   <PropertyGroup>
     <AssemblyName>CSharpScriptSerializer.Tests</AssemblyName>
     <PackageId>CSharpScriptSerializer.Tests</PackageId>
-    <VersionPrefix>1.5.0</VersionPrefix>
+    <VersionPrefix>1.6.1</VersionPrefix>
     <TargetFrameworks>netcoreapp2.1;net46</TargetFrameworks>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>

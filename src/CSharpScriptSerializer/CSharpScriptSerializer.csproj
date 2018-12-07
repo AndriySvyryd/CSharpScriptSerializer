@@ -5,7 +5,7 @@
     <PackageId>CSharpScriptSerializer</PackageId>
     <AssemblyTitle>CSharpScriptSerializer</AssemblyTitle>
     <Title>CSharpScriptSerializer</Title>
-    <VersionPrefix>1.5.0</VersionPrefix>
+    <VersionPrefix>1.6.1</VersionPrefix>
     <TargetFrameworks>netstandard1.5;net46</TargetFrameworks>
     <NetStandardImplicitPackageVersion Condition=" '$(TargetFramework)' == 'netstandard1.5' ">1.6.1</NetStandardImplicitPackageVersion>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
@@ -15,6 +15,8 @@
     <PackageTags>Roslyn;CSharp;C#;CSX;Script;Serialization</PackageTags>
     <PackageReleaseNotes>
       <![CDATA[
+Version 1.6.1
+* Update to Roslyn V2.9.0
 Version 1.5.0
 * Add support for hidden properties
 * Update to Roslyn V2.8.0
@@ -26,13 +28,10 @@ Version 1.2.0
 * Update to Roslyn V2
 Version 1.1.2
 * Increase max length for string literals
-Version 1.1.1
-* Use verbatim literals for multi-line strings
-* Remove redundant flags enum values
 ]]>
     </PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/AndriySvyryd/CSharpScriptSerializer</PackageProjectUrl>
-    <PackageLicenseUrl>http://www.apache.org/licenses/LICENSE-2.0</PackageLicenseUrl>
+    <PackageLicense>http://www.apache.org/licenses/LICENSE-2.0</PackageLicense>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/AndriySvyryd/CSharpScriptSerializer.git</RepositoryUrl>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -42,8 +41,8 @@ Version 1.1.1
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="2.8.2" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="2.8.2" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="2.9.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="2.9.0" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net46' ">
