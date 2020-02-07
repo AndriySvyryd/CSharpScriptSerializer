@@ -5,16 +5,19 @@
     <PackageId>CSharpScriptSerializer</PackageId>
     <AssemblyTitle>CSharpScriptSerializer</AssemblyTitle>
     <Title>CSharpScriptSerializer</Title>
-    <VersionPrefix>1.6.1</VersionPrefix>
-    <TargetFrameworks>netstandard1.5;net46</TargetFrameworks>
-    <NetStandardImplicitPackageVersion Condition=" '$(TargetFramework)' == 'netstandard1.5' ">1.6.1</NetStandardImplicitPackageVersion>
+    <VersionPrefix>2.0.0</VersionPrefix>
+    <TargetFrameworks>netstandard2.1</TargetFrameworks>
+    <NetStandardImplicitPackageVersion>2.0.3</NetStandardImplicitPackageVersion>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
-    <Description>Serialize to C# scripts</Description>
+    <Description>Serialize objects to C# scripts</Description>
     <Authors>Andriy Svyryd</Authors>
     <PackageTags>Roslyn;CSharp;C#;CSX;Script;Serialization</PackageTags>
     <PackageReleaseNotes>
       <![CDATA[
+Version 2.0.0
+* Update to Roslyn V3.4.0
+* Target netstandard2.1
 Version 1.6.1
 * Update to Roslyn V2.9.0
 Version 1.5.0
@@ -26,12 +29,10 @@ Version 1.3.0
 * Update to Roslyn V2.3.1
 Version 1.2.0
 * Update to Roslyn V2
-Version 1.1.2
-* Increase max length for string literals
 ]]>
     </PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/AndriySvyryd/CSharpScriptSerializer</PackageProjectUrl>
-    <PackageLicense>http://www.apache.org/licenses/LICENSE-2.0</PackageLicense>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/AndriySvyryd/CSharpScriptSerializer.git</RepositoryUrl>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -41,14 +42,8 @@ Version 1.1.2
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="2.9.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="2.9.0" />
-  </ItemGroup>
-
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net46' ">
-    <Reference Include="System.Runtime" />
-    <Reference Include="System" />
-    <Reference Include="Microsoft.CSharp" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="3.4.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="3.4.0" />
   </ItemGroup>
 
 </Project>
