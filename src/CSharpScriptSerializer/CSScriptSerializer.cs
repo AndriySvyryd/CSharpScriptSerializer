@@ -7,9 +7,11 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Formatting;
 using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Formatting;
+using Microsoft.CodeAnalysis.Options;
 using Microsoft.CodeAnalysis.Scripting;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
@@ -46,11 +48,8 @@ namespace CSharpScriptSerialization
             => CSharpScript.EvaluateAsync<T>(script,
                 ScriptOptions.Default.WithReferences(
                     typeof(T).GetTypeInfo().Assembly,
-                    typeof(List<>).GetTypeInfo().Assembly
-#if !NET46
-                    , Assembly.Load(new AssemblyName("mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e"))
-#endif
-                    )
+                    typeof(List<>).GetTypeInfo().Assembly,
+                    Assembly.Load(new AssemblyName("mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e")))
                     .AddReferences(typeof(CSScriptSerializer).GetTypeInfo()
                         .Assembly.GetReferencedAssemblies()
                         .Select(Assembly.Load))
@@ -61,14 +60,16 @@ namespace CSharpScriptSerialization
                         typeof(List<>).GetTypeInfo().Namespace)
                     .AddImports(imports));
 
-        public static string Serialize(object obj)
+        public static string Serialize(object obj, Func<OptionSet, OptionSet> applyFormattingOptions = null)
         {
             using (var workspace = new AdhocWorkspace())
             {
                 return Formatter.Format(
                     GetCompilationUnitExpression(obj),
                     workspace,
-                    workspace.Options)
+                    applyFormattingOptions == null
+                        ? workspace.Options
+                        : applyFormattingOptions(workspace.Options))
                     .ToFullString();
             }
         }

@@ -25,6 +25,13 @@ namespace CSharpScriptSerialization
         {
         }
 
+        /// <summary>
+        ///     Creates a new instance of <see cref="PropertyCSScriptSerializer"/>.
+        /// </summary>
+        /// <param name="propertyConditions">
+        ///     A collection of functions that determine whether the corresponding property should be serialized.
+        ///     If an entry is missing for any public property a default one will be created.
+        /// </param>
         public PropertyCSScriptSerializer(IReadOnlyDictionary<string, Func<T, object, bool>> propertyConditions)
             : this(propertyConditions, constructorParameterGetters: null)
         {
