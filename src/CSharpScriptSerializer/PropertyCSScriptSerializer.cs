@@ -189,7 +189,9 @@ namespace CSharpScriptSerialization
                     IdentifierName(p.PropertyName),
                     GetCreationExpression(p.PropertyValueGetter(obj)))).ToList();
 
-            var expression = base.GetObjectCreationExpression(obj, generateEmptyArgumentList: properties.Count == 0)
+            var expression = properties.Count == 0
+                ? base.GetObjectCreationExpression(obj, generateEmptyArgumentList: true)
+                : base.GetObjectCreationExpression(obj)
                     .WithInitializer(AddNewLine(
                         InitializerExpression(
                             SyntaxKind.ObjectInitializerExpression,
