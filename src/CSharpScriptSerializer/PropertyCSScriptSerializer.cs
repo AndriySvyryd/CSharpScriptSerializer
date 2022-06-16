@@ -84,8 +84,8 @@ namespace CSharpScriptSerialization
                 typeInfo = typeInfo.BaseType.GetTypeInfo();
             }
 
-            propertyConditions = propertyConditions ?? new Dictionary<string, Func<T, object, bool>>();
-            propertyValueGetters = propertyValueGetters ?? new Dictionary<string, Func<T, object>>();
+            propertyConditions ??= new Dictionary<string, Func<T, object, bool>>();
+            propertyValueGetters ??= new Dictionary<string, Func<T, object>>();
 
             _propertyData =
                 GetProperties(propertyConditions.Keys.Concat(propertyValueGetters.Keys).Distinct(),
@@ -101,8 +101,8 @@ namespace CSharpScriptSerialization
                             (o, v) => !Equals(v, GetDefault(p.PropertyType)))))
                     .ToArray();
 
-            hiddenPropertyConditions = hiddenPropertyConditions ?? new Dictionary<string, Func<T, object, bool>>();
-            hiddenPropertyValueGetters = hiddenPropertyValueGetters ?? new Dictionary<string, Func<T, object>>();
+            hiddenPropertyConditions ??= new Dictionary<string, Func<T, object, bool>>();
+            hiddenPropertyValueGetters ??= new Dictionary<string, Func<T, object>>();
 
             _hiddenPropertyData =
                 GetProperties(hiddenPropertyConditions.Keys.Concat(hiddenPropertyValueGetters.Keys).Distinct(),

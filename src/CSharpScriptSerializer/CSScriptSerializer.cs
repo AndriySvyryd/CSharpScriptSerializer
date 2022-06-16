@@ -69,6 +69,11 @@ namespace CSharpScriptSerialization
                     workspace,
                     applyFormattingOptions == null
                         ? workspace.Options
+                            .WithChangedOption(FormattingOptions.SmartIndent, LanguageNames.CSharp, FormattingOptions.IndentStyle.Smart)
+                            .WithChangedOption(CSharpFormattingOptions.WrappingKeepStatementsOnSingleLine, false)
+                            .WithChangedOption(CSharpFormattingOptions.WrappingPreserveSingleLine, false)
+                            .WithChangedOption(CSharpFormattingOptions.NewLinesForBracesInObjectCollectionArrayInitializers, true)
+                            .WithChangedOption(CSharpFormattingOptions.NewLineForMembersInObjectInit, true)
                         : applyFormattingOptions(workspace.Options))
                     .ToFullString();
             }
@@ -538,7 +543,6 @@ namespace CSharpScriptSerialization
         protected static TSyntax AddNewLine<TSyntax>(TSyntax expression)
             where TSyntax : SyntaxNode => expression.FullSpan.Length > 120
                 ? expression.WithLeadingTrivia(CarriageReturnLineFeed)
-                    .WithTrailingTrivia(CarriageReturnLineFeed)
                 : expression;
     }
 }

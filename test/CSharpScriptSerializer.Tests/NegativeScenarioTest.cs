@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
-using CSharpScriptSerialization;
 using Xunit;
 
-namespace CSharpScriptSerializer.Tests
+namespace CSharpScriptSerialization.Tests
 {
     public class NegativeScenarioTest
     {
