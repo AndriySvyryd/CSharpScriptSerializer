@@ -87,13 +87,19 @@ namespace CSharpScriptSerialization
         public override ExpressionSyntax GetCreation(object obj) => GetObjectCreationExpression((T)obj);
 
         protected override ObjectCreationExpressionSyntax GetObjectCreationExpression(T obj)
-            => base.GetObjectCreationExpression(obj)
-                .WithInitializer(AddNewLine(
-                    SyntaxFactory.InitializerExpression(
-                        SyntaxKind.CollectionInitializerExpression,
-                        SyntaxFactory.SeparatedList<ExpressionSyntax>(
-                            ToCommaSeparatedList(_getEnumerable(obj)
-                                .Select(GetElementExpression))))));
+        {
+            var list = _getEnumerable(obj).ToList();
+            return list.Count == 0
+                ? base.GetObjectCreationExpression(obj)
+                    .WithArgumentList(SyntaxFactory.ArgumentList())
+                : base.GetObjectCreationExpression(obj)
+                    .WithInitializer(AddNewLine(
+                        SyntaxFactory.InitializerExpression(
+                            SyntaxKind.CollectionInitializerExpression,
+                            SyntaxFactory.SeparatedList<ExpressionSyntax>(
+                                ToCommaSeparatedList(list
+                                    .Select(GetElementExpression))))));
+        }
 
         protected virtual ExpressionSyntax GetElementExpression(object element)
             => _elementDecomposers == null

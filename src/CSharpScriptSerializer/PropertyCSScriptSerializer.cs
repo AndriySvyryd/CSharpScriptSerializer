@@ -181,17 +181,23 @@ namespace CSharpScriptSerialization
         }
 
         protected override ObjectCreationExpressionSyntax GetObjectCreationExpression(T obj)
-            => base.GetObjectCreationExpression(obj)
-                .WithInitializer(AddNewLine(
-                    InitializerExpression(
-                        SyntaxKind.ObjectInitializerExpression,
-                        SeparatedList<ExpressionSyntax>(
-                            ToCommaSeparatedList(_propertyData
-                                .Where(p => p.PropertyCondition(obj, p.PropertyValueGetter(obj)))
-                                .Select(p => AssignmentExpression(
-                                    SyntaxKind.SimpleAssignmentExpression,
-                                    IdentifierName(p.PropertyName),
-                                    GetCreationExpression(p.PropertyValueGetter(obj)))))))));
+        {
+            var properties = _propertyData
+                .Where(p => p.PropertyCondition(obj, p.PropertyValueGetter(obj)))
+                .Select(p => AssignmentExpression(
+                    SyntaxKind.SimpleAssignmentExpression,
+                    IdentifierName(p.PropertyName),
+                    GetCreationExpression(p.PropertyValueGetter(obj)))).ToList();
+
+            var expression = base.GetObjectCreationExpression(obj, generateEmptyArgumentList: properties.Count == 0)
+                    .WithInitializer(AddNewLine(
+                        InitializerExpression(
+                            SyntaxKind.ObjectInitializerExpression,
+                            SeparatedList<ExpressionSyntax>(
+                                ToCommaSeparatedList(properties)))));
+            
+            return expression;
+        }
 
         protected static Func<T, object> CreatePropertyValueGetter(PropertyInfo property)
         {

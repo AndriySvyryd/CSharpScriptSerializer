@@ -7,7 +7,7 @@ namespace CSharpScriptSerialization.Tests
     public class NegativeScenarioTest
     {
         [Fact]
-        public void NousableProperties()
+        public void NoUsableProperties()
         {
             var input = new Private();
 

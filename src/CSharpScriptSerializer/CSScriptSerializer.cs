@@ -527,17 +527,19 @@ namespace CSharpScriptSerialization
             return QualifiedName(GetNameSyntax(declaringType, declaringTypeGenericArguments), simpleName);
         }
 
-        private static Type GetArrayElementType(Type type)
+        protected static Type GetArrayElementType(Type type)
             => type.IsArray ? GetArrayElementType(type.GetElementType()) : type;
 
-        private static IEnumerable<ArrayRankSpecifierSyntax> GetArrayRanks(Type type)
+        protected static IEnumerable<ArrayRankSpecifierSyntax> GetArrayRanks(Type type)
             => type == null || !type.IsArray
                 ? Enumerable.Empty<ArrayRankSpecifierSyntax>()
-                : Enumerable.Repeat(ArrayRankSpecifier(
-                    SeparatedList<ExpressionSyntax>(
-                        ToCommaSeparatedList(
-                            Enumerable.Repeat(OmittedArraySizeExpression(), type.GetArrayRank())))),
-                    count: 1)
+                : new[]
+                    {
+                        ArrayRankSpecifier(
+                            SeparatedList<ExpressionSyntax>(
+                                ToCommaSeparatedList(
+                                    Enumerable.Repeat(OmittedArraySizeExpression(), type.GetArrayRank()))))
+                    }
                     .Concat(GetArrayRanks(type.GetElementType()));
 
         protected static TSyntax AddNewLine<TSyntax>(TSyntax expression)

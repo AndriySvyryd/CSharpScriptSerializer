@@ -30,9 +30,12 @@ namespace CSharpScriptSerialization
         public override ExpressionSyntax GetCreation(object obj) => GetObjectCreationExpression((T)obj);
 
         protected virtual ObjectCreationExpressionSyntax GetObjectCreationExpression(T obj)
+            => GetObjectCreationExpression(obj, GenerateEmptyArgumentList);
+
+        protected virtual ObjectCreationExpressionSyntax GetObjectCreationExpression(T obj, bool generateEmptyArgumentList)
             => _constructorParameterGetters == null
                || _constructorParameterGetters.Count == 0
-                ? GenerateEmptyArgumentList
+                ? generateEmptyArgumentList
                     ? GetObjectCreationExpression().WithArgumentList(SyntaxFactory.ArgumentList())
                     : GetObjectCreationExpression()
                 : GetObjectCreationExpression()
@@ -43,7 +46,6 @@ namespace CSharpScriptSerialization
                                     SyntaxFactory.Argument(GetCreationExpression(a(obj)))))))));
 
         protected virtual ObjectCreationExpressionSyntax GetObjectCreationExpression()
-            => _objectCreationExpression ??
-               (_objectCreationExpression = SyntaxFactory.ObjectCreationExpression(GetTypeSyntax(Type)));
+            =>_objectCreationExpression ??= SyntaxFactory.ObjectCreationExpression(GetTypeSyntax(Type));
     }
 }

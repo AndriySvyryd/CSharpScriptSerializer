@@ -169,23 +169,29 @@ namespace CSharpScriptSerialization.Tests
                 + typeof(RoundtrippingTest).Name + "." + typeof(FlagsEnum).Name + "." + FlagsEnum.SecondAndThird, script);
         }
 
-        [Fact]
-        public void VerbatimStrings()
-        {
-            ValidateStringLiteral("\r", verbatim: true);
-            ValidateStringLiteral("\n", verbatim: true);
-            ValidateStringLiteral("\"", verbatim: false);
-            ValidateStringLiteral("@", verbatim: false);
-            ValidateStringLiteral("A", verbatim: false);
-        }
-
-        private void ValidateStringLiteral(string input, bool verbatim)
+        [Theory]
+        [InlineData("\r", true)]
+        [InlineData("\n", true)]
+        [InlineData("\"", false)]
+        [InlineData("@", false)]
+        [InlineData("A", false)]
+        public void VerbatimStrings(string input, bool verbatim)
         {
             var script = CSScriptSerializer.Serialize(input);
             Assert.Equal(verbatim ? '@' : '"', script[0]);
 
             var output = CSScriptSerializer.Deserialize<string>(script);
             Assert.Equal(input, output);
+        }
+
+        [Fact]
+        public void EmptyCollections()
+        {
+            Validate(new int?[,] { });
+            Validate(new List<string[]>[] { });
+            Validate(new object[][] { });
+            Validate(new List<string>());
+            Validate(new Dictionary<bool, bool?>());
         }
 
         [Fact]
@@ -211,8 +217,15 @@ namespace CSharpScriptSerialization.Tests
                                                                               17
                                                                               18
                                                                               19";
+
+            Validate(input);
+        }
+
+        private static void Validate<T>(T input)
+        {
             var script = CSScriptSerializer.Serialize(input);
-            var output = CSScriptSerializer.Deserialize<string>(script);
+            var output = CSScriptSerializer.Deserialize<T>(script);
+
             Assert.Equal(input, output);
         }
 
@@ -346,6 +359,14 @@ namespace CSharpScriptSerialization.Tests
 
             var script = CSScriptSerializer.Serialize(input);
             var output = CSScriptSerializer.Deserialize<OverrideDerived>(script);
+
+            Assert.Equal(input.Property, output.Property);
+            Assert.Equal(input.GetSetCount(), output.GetSetCount());
+            
+            input = new OverrideDerived();
+
+            script = CSScriptSerializer.Serialize(input);
+            output = CSScriptSerializer.Deserialize<OverrideDerived>(script);
 
             Assert.Equal(input.Property, output.Property);
             Assert.Equal(input.GetSetCount(), output.GetSetCount());

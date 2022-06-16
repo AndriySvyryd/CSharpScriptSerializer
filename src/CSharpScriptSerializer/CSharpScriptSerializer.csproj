@@ -5,7 +5,7 @@
     <PackageId>CSharpScriptSerializer</PackageId>
     <AssemblyTitle>CSharpScriptSerializer</AssemblyTitle>
     <Title>CSharpScriptSerializer</Title>
-    <VersionPrefix>3.0.2</VersionPrefix>
+    <VersionPrefix>3.0.3</VersionPrefix>
     <TargetFrameworks>netstandard2.1</TargetFrameworks>
     <NetStandardImplicitPackageVersion>2.0.3</NetStandardImplicitPackageVersion>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
@@ -15,6 +15,8 @@
     <PackageTags>Roslyn;CSharp;C#;CSX;Script;Serialization</PackageTags>
     <PackageReleaseNotes>
       <![CDATA[
+Version 3.0.3
+* Simplify empty collections
 Version 3.0.2
 * Remove trailing new line
 Version 3.0.0
@@ -29,10 +31,6 @@ Version 1.5.0
 * Update to Roslyn V2.8.0
 Version 1.4.0
 * Add support for ValueTuple, Type and plain Object
-Version 1.3.0
-* Update to Roslyn V2.3.1
-Version 1.2.0
-* Update to Roslyn V2
 ]]>
     </PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/AndriySvyryd/CSharpScriptSerializer</PackageProjectUrl>
