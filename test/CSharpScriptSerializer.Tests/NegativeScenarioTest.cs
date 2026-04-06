@@ -26,6 +26,14 @@ namespace CSharpScriptSerialization.Tests
                     })).Message);
         }
 
+        [Fact]
+        public void InvalidIgnoredPropertyName()
+        {
+            Assert.Equal($"The type {typeof(Private)} does not have a public nonstatic writable property PrivateProperty",
+                Assert.Throws<InvalidOperationException>(() => new PropertyCSScriptSerializer<Private>(
+                    new[] { "PrivateProperty" })).Message);
+        }
+
         public class Private
         {
             private int PrivateProperty { get; set; }

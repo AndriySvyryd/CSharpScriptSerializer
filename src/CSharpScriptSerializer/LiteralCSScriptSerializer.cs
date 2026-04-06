@@ -8,6 +8,10 @@ using Microsoft.CodeAnalysis.Scripting.Hosting;
 
 namespace CSharpScriptSerialization
 {
+    /// <summary>
+    ///     Serializes primitive values (<see cref="int"/>, <see cref="string"/>, <see cref="char"/>, etc.)
+    ///     as C# literal expressions.
+    /// </summary>
     public class LiteralCSScriptSerializer : CSScriptSerializer
     {
         private static readonly Dictionary<Type, Func<object, SyntaxToken>> LiteralFactories =
@@ -35,10 +39,18 @@ namespace CSharpScriptSerialization
                 {typeof(sbyte), x => SyntaxFactory.Literal((sbyte)x)}
             };
 
+        /// <summary>
+        ///     Creates a new instance of <see cref="LiteralCSScriptSerializer"/> for the given type and literal kind.
+        /// </summary>
+        /// <param name="type">The <see cref="System.Type"/> of the literal value.</param>
+        /// <param name="kind">The Roslyn <see cref="SyntaxKind"/> of the literal expression (e.g., <see cref="SyntaxKind.NumericLiteralExpression"/>).</param>
         public LiteralCSScriptSerializer(Type type, SyntaxKind kind)
             : base(type)
             => Kind = kind;
 
+        /// <summary>
+        ///     Gets the Roslyn <see cref="SyntaxKind"/> used for the literal expression.
+        /// </summary>
         protected SyntaxKind Kind { get; }
 
         public override ExpressionSyntax GetCreation(object obj) => SyntaxFactory.LiteralExpression(

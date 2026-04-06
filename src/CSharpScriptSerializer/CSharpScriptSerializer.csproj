@@ -5,9 +5,8 @@
     <PackageId>CSharpScriptSerializer</PackageId>
     <AssemblyTitle>CSharpScriptSerializer</AssemblyTitle>
     <Title>CSharpScriptSerializer</Title>
-    <VersionPrefix>3.0.4</VersionPrefix>
+    <VersionPrefix>4.0.0</VersionPrefix>
     <TargetFrameworks>netstandard2.1</TargetFrameworks>
-    <NetStandardImplicitPackageVersion>2.0.3</NetStandardImplicitPackageVersion>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
     <Description>Serialize objects to C# scripts</Description>
@@ -15,6 +14,8 @@
     <PackageTags>Roslyn;CSharp;C#;CSX;Script;Serialization</PackageTags>
     <PackageReleaseNotes>
       <![CDATA[
+Version 4.0.0
+* Update to Roslyn V5.3.0
 Version 3.0.4
 * Simplify empty object initializers
 Version 3.0.3
@@ -46,8 +47,8 @@ Version 1.4.0
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.2.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.2.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="5.3.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="5.3.0" />
   </ItemGroup>
 
 </Project>

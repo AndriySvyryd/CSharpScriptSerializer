@@ -8,8 +8,15 @@ using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace CSharpScriptSerialization
 {
+    /// <summary>
+    ///     Serializes arrays (including multi-dimensional and jagged arrays) as C# array creation expressions.
+    /// </summary>
     public class ArrayCSScriptSerializer : CSScriptSerializer
     {
+        /// <summary>
+        ///     Creates a new instance of <see cref="ArrayCSScriptSerializer"/> for the given array type.
+        /// </summary>
+        /// <param name="type">The array <see cref="System.Type"/> to serialize.</param>
         public ArrayCSScriptSerializer(Type type)
             : base(type)
         {

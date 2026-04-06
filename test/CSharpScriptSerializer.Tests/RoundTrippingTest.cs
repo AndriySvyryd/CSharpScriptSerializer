@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace CSharpScriptSerialization.Tests
@@ -24,7 +25,7 @@ namespace CSharpScriptSerialization.Tests
         }
 
         [Fact]
-        public void KnownTypes()
+        public async Task KnownTypes()
         {
             var dateTime = new DateTime(2000, 1, 1, 0, 0, 0);
             var dateTimeOffset = new DateTimeOffset(new DateTime(), TimeSpan.FromHours(-8.0));
@@ -82,7 +83,7 @@ namespace CSharpScriptSerialization.Tests
             };
 
             var script = CSScriptSerializer.Serialize(input);
-            var output = CSScriptSerializer.DeserializeAsync<AllSupportedTypes>(script).GetAwaiter().GetResult();
+            var output = await CSScriptSerializer.DeserializeAsync<AllSupportedTypes>(script);
 
             foreach (var propertyInfo in typeof(AllSupportedTypes).GetProperties())
             {
@@ -478,6 +479,31 @@ namespace CSharpScriptSerialization.Tests
                         },
                         new List<Func<ConstructorParams, object>> {o => o.RequiredString})
                     : null;
+        }
+
+        [Fact]
+        public void IgnoredProperties()
+        {
+            CSScriptSerializer.Serializers[typeof(WithIgnoredProperties)] =
+                new PropertyCSScriptSerializer<WithIgnoredProperties>(
+                    new[] { nameof(WithIgnoredProperties.Ignored1), nameof(WithIgnoredProperties.Ignored2) });
+
+            var input = new WithIgnoredProperties { Kept = 1, Ignored1 = 2, Ignored2 = "hello" };
+            var script = CSScriptSerializer.Serialize(input);
+            var output = CSScriptSerializer.Deserialize<WithIgnoredProperties>(script);
+
+            Assert.Equal(input.Kept, output.Kept);
+            Assert.Equal(0, output.Ignored1);
+            Assert.Null(output.Ignored2);
+
+            CSScriptSerializer.Serializers.TryRemove(typeof(WithIgnoredProperties), out _);
+        }
+
+        public class WithIgnoredProperties
+        {
+            public int Kept { get; set; }
+            public int Ignored1 { get; set; }
+            public string Ignored2 { get; set; }
         }
 
         [Fact]

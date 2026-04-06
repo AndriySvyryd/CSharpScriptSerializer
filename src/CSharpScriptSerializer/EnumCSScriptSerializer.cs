@@ -6,8 +6,16 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace CSharpScriptSerialization
 {
+    /// <summary>
+    ///     Serializes enum values as member-access expressions (e.g., <c>MyEnum.Value</c>).
+    ///     Composite flag values are represented as bitwise-OR combinations of their constituent members.
+    /// </summary>
     public class EnumCSScriptSerializer : CSScriptSerializer
     {
+        /// <summary>
+        ///     Creates a new instance of <see cref="EnumCSScriptSerializer"/> for the given enum type.
+        /// </summary>
+        /// <param name="type">The enum <see cref="System.Type"/> to serialize.</param>
         public EnumCSScriptSerializer(Type type)
             : base(type)
         {

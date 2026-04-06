@@ -17,11 +17,24 @@ using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace CSharpScriptSerialization
 {
+    /// <summary>
+    ///     Abstract base class for all C# script serializers. Provides static factory methods to
+    ///     <see cref="Serialize">serialize</see> .NET objects to C# script strings and
+    ///     <see cref="DeserializeAsync{T}(string)">deserialize</see> them back by evaluating the script.
+    /// </summary>
     public abstract class CSScriptSerializer : ICSScriptSerializer
     {
+        /// <summary>
+        ///     A list of <see cref="ICSScriptSerializerFactory"/> instances consulted in order when no serializer
+        ///     is found in <see cref="Serializers"/> for a given type. Add factories here to support additional types.
+        /// </summary>
         public static readonly List<ICSScriptSerializerFactory> SerializerFactories =
             new List<ICSScriptSerializerFactory>();
 
+        /// <summary>
+        ///     A cache of <see cref="ICSScriptSerializer"/> instances keyed by <see cref="System.Type"/>.
+        ///     Pre-populate entries here to override the default serializer for specific types.
+        /// </summary>
         public static readonly ConcurrentDictionary<Type, ICSScriptSerializer> Serializers =
             new ConcurrentDictionary<Type, ICSScriptSerializer>();
 
@@ -30,19 +43,49 @@ namespace CSharpScriptSerialization
 
         protected CSScriptSerializer(Type type) => Type = type;
 
+        /// <summary>
+        ///     Gets the CLR <see cref="System.Type"/> this serializer handles.
+        /// </summary>
         public Type Type { get; }
 
+        /// <inheritdoc/>
         public abstract ExpressionSyntax GetCreation(object obj);
 
+        /// <summary>
+        ///     Evaluates a C# script string and returns the result as <typeparamref name="T"/>.
+        /// </summary>
+        /// <typeparam name="T">The expected type of the evaluated result.</typeparam>
+        /// <param name="script">The C# script to evaluate.</param>
         public static T Deserialize<T>(string script) => DeserializeAsync<T>(script).GetAwaiter().GetResult();
 
+        /// <summary>
+        ///     Asynchronously evaluates a C# script string and returns the result as <typeparamref name="T"/>.
+        /// </summary>
+        /// <typeparam name="T">The expected type of the evaluated result.</typeparam>
+        /// <param name="script">The C# script to evaluate.</param>
         public static Task<T> DeserializeAsync<T>(string script)
             => DeserializeAsync<T>(script, Enumerable.Empty<Assembly>(), Enumerable.Empty<string>());
 
+        /// <summary>
+        ///     Evaluates a C# script string with additional assembly references and namespace imports,
+        ///     and returns the result as <typeparamref name="T"/>.
+        /// </summary>
+        /// <typeparam name="T">The expected type of the evaluated result.</typeparam>
+        /// <param name="script">The C# script to evaluate.</param>
+        /// <param name="referencedAssemblies">Additional assemblies to reference during evaluation.</param>
+        /// <param name="imports">Additional namespaces to import during evaluation.</param>
         public static T Deserialize<T>(string script, IEnumerable<Assembly> referencedAssemblies,
             IEnumerable<string> imports)
             => DeserializeAsync<T>(script, referencedAssemblies, imports).GetAwaiter().GetResult();
 
+        /// <summary>
+        ///     Asynchronously evaluates a C# script string with additional assembly references and namespace imports,
+        ///     and returns the result as <typeparamref name="T"/>.
+        /// </summary>
+        /// <typeparam name="T">The expected type of the evaluated result.</typeparam>
+        /// <param name="script">The C# script to evaluate.</param>
+        /// <param name="referencedAssemblies">Additional assemblies to reference during evaluation.</param>
+        /// <param name="imports">Additional namespaces to import during evaluation.</param>
         public static Task<T> DeserializeAsync<T>(
             string script, IEnumerable<Assembly> referencedAssemblies, IEnumerable<string> imports)
             => CSharpScript.EvaluateAsync<T>(script,
@@ -60,6 +103,15 @@ namespace CSharpScriptSerialization
                         typeof(List<>).GetTypeInfo().Namespace)
                     .AddImports(imports));
 
+        /// <summary>
+        ///     Serializes <paramref name="obj"/> to a formatted C# script string.
+        /// </summary>
+        /// <param name="obj">The object to serialize.</param>
+        /// <param name="applyFormattingOptions">
+        ///     An optional delegate to customize the Roslyn formatting options applied to the output.
+        ///     When <see langword="null"/>, a sensible default set of options is used.
+        /// </param>
+        /// <returns>A C# script string that, when evaluated, recreates <paramref name="obj"/>.</returns>
         public static string Serialize(object obj, Func<OptionSet, OptionSet> applyFormattingOptions = null)
         {
             using (var workspace = new AdhocWorkspace())
@@ -79,6 +131,11 @@ namespace CSharpScriptSerialization
             }
         }
 
+        /// <summary>
+        ///     Returns the full Roslyn <see cref="CompilationUnitSyntax"/> that wraps the creation expression for
+        ///     <paramref name="obj"/> as a top-level global statement.
+        /// </summary>
+        /// <param name="obj">The object to serialize.</param>
         public static CompilationUnitSyntax GetCompilationUnitExpression(object obj) => CompilationUnit()
             .WithMembers(
                 SingletonList<MemberDeclarationSyntax>(
@@ -86,6 +143,10 @@ namespace CSharpScriptSerialization
                         ExpressionStatement(GetCreationExpression(obj))
                             .WithSemicolonToken(MissingToken(SyntaxKind.SemicolonToken)))));
 
+        /// <summary>
+        ///     Returns the Roslyn <see cref="ExpressionSyntax"/> that represents the creation of <paramref name="obj"/>.
+        /// </summary>
+        /// <param name="obj">The object to serialize.</param>
         public static ExpressionSyntax GetCreationExpression(object obj) => GetSerializer(obj).GetCreation(obj);
 
         private static ICSScriptSerializer GetSerializer(object obj)

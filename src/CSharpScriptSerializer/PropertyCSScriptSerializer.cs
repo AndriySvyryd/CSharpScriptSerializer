@@ -10,39 +10,99 @@ using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace CSharpScriptSerialization
 {
+    /// <summary>
+    ///     Serializes objects of type <typeparamref name="T"/> as a C# object initializer expression
+    ///     using the type's public writable properties.
+    /// </summary>
+    /// <typeparam name="T">The type of object to serialize.</typeparam>
     public class PropertyCSScriptSerializer<T> : ConstructorCSScriptSerializer<T>
     {
         private readonly IReadOnlyCollection<PropertyData> _propertyData;
         private readonly IReadOnlyCollection<PropertyData> _hiddenPropertyData;
 
+        /// <summary>
+        ///     Creates a new instance of <see cref="PropertyCSScriptSerializer{T}"/> using default serialization
+        ///     conditions for all public writable properties.
+        /// </summary>
         public PropertyCSScriptSerializer()
             : this((Func<T, object>[])null)
         {
         }
 
+        /// <summary>
+        ///     Creates a new instance of <see cref="PropertyCSScriptSerializer{T}"/> with constructor parameters
+        ///     and default serialization conditions for all public writable properties.
+        /// </summary>
+        /// <param name="constructorParameterGetters">
+        ///     Getters for values passed as positional constructor arguments when creating <typeparamref name="T"/>.
+        /// </param>
         public PropertyCSScriptSerializer(IReadOnlyCollection<Func<T, object>> constructorParameterGetters)
             : this(propertyConditions: null, constructorParameterGetters: constructorParameterGetters)
         {
         }
 
         /// <summary>
-        ///     Creates a new instance of <see cref="PropertyCSScriptSerializer"/>.
+        ///     Creates a new instance of <see cref="PropertyCSScriptSerializer{T}"/> that excludes the specified
+        ///     properties from serialization.
+        /// </summary>
+        /// <param name="ignoredProperties">
+        ///     The names of the public writable properties to exclude from serialization.
+        ///     Throws <see cref="InvalidOperationException"/> if any name does not correspond
+        ///     to a public writable property on <typeparamref name="T"/>.
+        /// </param>
+        public PropertyCSScriptSerializer(IReadOnlyCollection<string> ignoredProperties)
+            : this(
+                ignoredProperties?.ToDictionary<string, string, Func<T, object, bool>>(
+                    p => p, p => (o, v) => false),
+                constructorParameterGetters: null)
+        {
+        }
+
+        /// <summary>
+        ///     Creates a new instance of <see cref="PropertyCSScriptSerializer{T}"/> with per-property serialization conditions.
         /// </summary>
         /// <param name="propertyConditions">
-        ///     A collection of functions that determine whether the corresponding property should be serialized.
-        ///     If an entry is missing for any public property a default one will be created.
+        ///     A dictionary mapping property names to functions that determine whether each property should be serialized,
+        ///     given the object and the current property value. Properties not present in this dictionary use a default
+        ///     condition that serializes the property only when its value differs from the type default.
         /// </param>
         public PropertyCSScriptSerializer(IReadOnlyDictionary<string, Func<T, object, bool>> propertyConditions)
             : this(propertyConditions, constructorParameterGetters: null)
         {
         }
 
+        /// <summary>
+        ///     Creates a new instance of <see cref="PropertyCSScriptSerializer{T}"/> with per-property serialization
+        ///     conditions and constructor parameters.
+        /// </summary>
+        /// <param name="propertyConditions">
+        ///     A dictionary mapping property names to functions that determine whether each property should be serialized.
+        ///     Properties not present in this dictionary use a default condition.
+        /// </param>
+        /// <param name="constructorParameterGetters">
+        ///     Getters for values passed as positional constructor arguments when creating <typeparamref name="T"/>.
+        /// </param>
         public PropertyCSScriptSerializer(IReadOnlyDictionary<string, Func<T, object, bool>> propertyConditions,
             IReadOnlyCollection<Func<T, object>> constructorParameterGetters)
             : this(propertyConditions, constructorParameterGetters, propertyValueGetters: null)
         {
         }
 
+        /// <summary>
+        ///     Creates a new instance of <see cref="PropertyCSScriptSerializer{T}"/> with per-property serialization
+        ///     conditions, constructor parameters, and custom property value getters.
+        /// </summary>
+        /// <param name="propertyConditions">
+        ///     A dictionary mapping property names to functions that determine whether each property should be serialized.
+        ///     Properties not present in this dictionary use a default condition.
+        /// </param>
+        /// <param name="constructorParameterGetters">
+        ///     Getters for values passed as positional constructor arguments when creating <typeparamref name="T"/>.
+        /// </param>
+        /// <param name="propertyValueGetters">
+        ///     A dictionary mapping property names to functions that return the value to serialize for each property,
+        ///     overriding the default property getter.
+        /// </param>
         public PropertyCSScriptSerializer(IReadOnlyDictionary<string, Func<T, object, bool>> propertyConditions,
             IReadOnlyCollection<Func<T, object>> constructorParameterGetters,
             IReadOnlyDictionary<string, Func<T, object>> propertyValueGetters)
@@ -50,6 +110,28 @@ namespace CSharpScriptSerialization
         {
         }
 
+        /// <summary>
+        ///     Creates a new instance of <see cref="PropertyCSScriptSerializer{T}"/> with full control over property
+        ///     serialization for both visible and hidden (shadowed) properties.
+        /// </summary>
+        /// <param name="propertyConditions">
+        ///     A dictionary mapping property names to functions that determine whether each property should be serialized.
+        ///     Properties not present in this dictionary use a default condition.
+        /// </param>
+        /// <param name="constructorParameterGetters">
+        ///     Getters for values passed as positional constructor arguments when creating <typeparamref name="T"/>.
+        /// </param>
+        /// <param name="propertyValueGetters">
+        ///     A dictionary mapping property names to functions that return the value to serialize for each property.
+        /// </param>
+        /// <param name="hiddenPropertyConditions">
+        ///     A dictionary mapping <c>DeclaringTypeName.PropertyName</c> keys to functions that determine whether
+        ///     each hidden (shadowed) base-class property should be serialized.
+        /// </param>
+        /// <param name="hiddenPropertyValueGetters">
+        ///     A dictionary mapping <c>DeclaringTypeName.PropertyName</c> keys to functions that return the value
+        ///     to serialize for each hidden (shadowed) base-class property.
+        /// </param>
         public PropertyCSScriptSerializer(IReadOnlyDictionary<string, Func<T, object, bool>> propertyConditions,
             IReadOnlyCollection<Func<T, object>> constructorParameterGetters,
             IReadOnlyDictionary<string, Func<T, object>> propertyValueGetters,
@@ -91,14 +173,18 @@ namespace CSharpScriptSerialization
                 GetProperties(propertyConditions.Keys.Concat(propertyValueGetters.Keys).Distinct(),
                     allUsableProperties, hidden: false)
                     .Concat(allUsableProperties.Values.Where(IsCandidateProperty)).Distinct()
-                    .Select(p => new PropertyData(
-                        p.Name,
-                        p.PropertyType,
-                        p.DeclaringType,
-                        propertyValueGetters.GetValueOrDefault(p.Name,
-                            CreatePropertyValueGetter(p)),
-                        propertyConditions.GetValueOrDefault(p.Name,
-                            (o, v) => !Equals(v, GetDefault(p.PropertyType)))))
+                    .Select(p =>
+                    {
+                        var propertyType = p.PropertyType;
+                        return new PropertyData(
+                            p.Name,
+                            propertyType,
+                            p.DeclaringType,
+                            propertyValueGetters.GetValueOrDefault(p.Name,
+                                CreatePropertyValueGetter(p)),
+                            propertyConditions.GetValueOrDefault(p.Name,
+                                (o, v) => !Equals(v, GetDefault(propertyType))));
+                    })
                     .ToArray();
 
             hiddenPropertyConditions ??= new Dictionary<string, Func<T, object, bool>>();
@@ -108,14 +194,18 @@ namespace CSharpScriptSerialization
                 GetProperties(hiddenPropertyConditions.Keys.Concat(hiddenPropertyValueGetters.Keys).Distinct(),
                     allHiddenProperties, hidden: true)
                     .Concat(allHiddenProperties.Values.Where(IsCandidateProperty)).Distinct()
-                    .Select(p => new PropertyData(
-                        p.Name,
-                        p.PropertyType,
-                        p.DeclaringType,
-                        hiddenPropertyValueGetters.GetValueOrDefault(p.DeclaringType.Name + "." + p.Name,
-                            CreatePropertyValueGetter(p)),
-                        hiddenPropertyConditions.GetValueOrDefault(p.DeclaringType.Name + "." + p.Name,
-                            (o, v) => !Equals(v, GetDefault(p.PropertyType)))))
+                    .Select(p =>
+                    {
+                        var propertyType = p.PropertyType;
+                        return new PropertyData(
+                            p.Name,
+                            propertyType,
+                            p.DeclaringType,
+                            hiddenPropertyValueGetters.GetValueOrDefault(p.DeclaringType.Name + "." + p.Name,
+                                CreatePropertyValueGetter(p)),
+                            hiddenPropertyConditions.GetValueOrDefault(p.DeclaringType.Name + "." + p.Name,
+                                (o, v) => !Equals(v, GetDefault(propertyType))));
+                    })
                     .ToArray();
         }
 
