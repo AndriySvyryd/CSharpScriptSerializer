@@ -30,8 +30,8 @@ namespace CSharpScriptSerialization
         ///     Creates a new instance of <see cref="CollectionCSScriptSerializer{T}"/> with custom element decomposers.
         /// </summary>
         /// <param name="elementDecomposers">
-        ///     Functions that decompose each element into sub-values for a complex collection initializer entry
-        ///     (e.g., key and value for a dictionary). Pass <see langword="null"/> or empty to serialize each element directly.
+        ///     Functions that decompose each element into sub-values for a collection initializer entry
+        ///     (e.g., key and value for a dictionary index initializer). Pass <see langword="null"/> or empty to serialize each element directly.
         /// </param>
         public CollectionCSScriptSerializer(
             IReadOnlyCollection<Func<object, object>> elementDecomposers)
@@ -165,15 +165,36 @@ namespace CSharpScriptSerialization
         }
 
         protected virtual ExpressionSyntax GetElementExpression(object element)
-            => _elementDecomposers == null
-               || _elementDecomposers.Count == 0
-                ? GetCreationExpression(element)
-                : _elementDecomposers.Count == 1
-                    ? GetCreationExpression(_elementDecomposers.First()(element))
-                    : SyntaxFactory.InitializerExpression(
-                        SyntaxKind.ComplexElementInitializerExpression,
-                        SyntaxFactory.SeparatedList<ExpressionSyntax>(
-                            ToCommaSeparatedList(_elementDecomposers
-                                .Select(getSubelement => GetCreationExpression(getSubelement(element))))));
+        {
+            if (_elementDecomposers == null || _elementDecomposers.Count == 0)
+            {
+                return GetCreationExpression(element);
+            }
+
+            var decomposedElements = _elementDecomposers
+                .Select(getSubelement => GetCreationExpression(getSubelement(element)))
+                .ToArray();
+
+            if (decomposedElements.Length == 1)
+            {
+                return decomposedElements[0];
+            }
+
+            if (decomposedElements.Length == 2 && typeof(IDictionary).IsAssignableFrom(typeof(T)))
+            {
+                return SyntaxFactory.AssignmentExpression(
+                    SyntaxKind.SimpleAssignmentExpression,
+                    SyntaxFactory.ImplicitElementAccess(
+                        SyntaxFactory.BracketedArgumentList(
+                            SyntaxFactory.SingletonSeparatedList(
+                                SyntaxFactory.Argument(decomposedElements[0])))),
+                    decomposedElements[1]);
+            }
+
+            return SyntaxFactory.InitializerExpression(
+                SyntaxKind.ComplexElementInitializerExpression,
+                SyntaxFactory.SeparatedList<ExpressionSyntax>(
+                    ToCommaSeparatedList(decomposedElements)));
+        }
     }
 }

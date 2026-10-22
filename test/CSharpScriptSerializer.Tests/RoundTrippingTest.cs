@@ -83,6 +83,9 @@ namespace CSharpScriptSerialization.Tests
             };
 
             var script = CSScriptSerializer.Serialize(input);
+            Assert.Contains("[false] = null", script);
+            Assert.Contains("[true] = true", script);
+
             var output = await CSScriptSerializer.DeserializeAsync<AllSupportedTypes>(script);
 
             foreach (var propertyInfo in typeof(AllSupportedTypes).GetProperties())
