@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/CSharpScriptSerializer/CSharpScriptSerializer.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/CSharpScriptSerializer.Tests/CSharpScriptSerializer.Tests.csproj" />
+  </Folder>
+</Solution>
